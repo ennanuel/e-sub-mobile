@@ -1,0 +1,352 @@
+.listing {
+  position: relative;
+  z-index: 2;
+  background: var(--white);
+}
+
+/* While the cover shows: the listing lies over it, see-through, with only the white sheet moving. */
+.morphing {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  width: var(--app-width);
+  height: 100dvh;
+  transform: translateX(-50%);
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Off screen until the first frame of the animation places it. */
+.morphing .sheet {
+  transform: translateY(110dvh);
+}
+
+.morphing .scene,
+.morphing .topBar {
+  opacity: 0;
+}
+
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 0;
+}
+
+.topBar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(86px + env(safe-area-inset-top, 0px));
+  background: var(--white);
+  box-shadow: 0 1px 0 var(--rule);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scrolled::before {
+  opacity: 1;
+}
+
+.topButtons {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: calc(22px + env(safe-area-inset-top, 0px));
+  display: flex;
+  justify-content: space-between;
+}
+
+.scene {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+}
+
+.sheet {
+  position: relative;
+  z-index: 1;
+  margin-top: -28px;
+  padding: 14px 24px calc(44px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px 28px 0 0;
+  background: var(--white);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.1);
+  will-change: transform;
+}
+
+.grab {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 22px;
+  border-radius: 99px;
+  background: #e2e2e2;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.name {
+  margin: 4px 0 0;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+}
+
+.price {
+  margin-top: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.priceValue {
+  margin-top: 2px;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+.realtor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.realtor img {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #dcdcff;
+}
+
+.realtorText {
+  flex: 1;
+  min-width: 0;
+}
+
+.realtorText b {
+  display: block;
+  font-size: 16px;
+}
+
+.realtorText span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.call {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1.5px solid var(--rule);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.description {
+  margin: 18px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sectionLabel {
+  margin: 28px 0 0;
+  color: var(--ink);
+}
+
+.amenities {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amenities li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.amenityNo {
+  width: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.amenityLabel {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.amenityIcon {
+  display: flex;
+  color: var(--muted);
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.photo {
+  position: relative;
+  height: 120px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+}
+
+.photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.paperwork {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+  padding: 18px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  color: inherit;
+  text-decoration: none;
+}
+
+.paperworkCount {
+  font-family: var(--font-mono);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.8;
+  color: var(--blue);
+}
+
+.paperworkText {
+  flex: 1;
+  min-width: 0;
+}
+
+.paperworkText b {
+  display: block;
+  font-size: 17px;
+}
+
+.paperworkText span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.units {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+  color: inherit;
+  text-decoration: none;
+}
+
+.unitSize {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.unitSize b {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.unitSize span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.unitUse,
+.unitUseCommercial {
+  display: block;
+  margin-top: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.unitUseCommercial {
+  color: var(--blue);
+}
+
+.unitRight {
+  text-align: right;
+}
+
+.unitPrice {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.unitPrice span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.unitPlan {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--red);
+}

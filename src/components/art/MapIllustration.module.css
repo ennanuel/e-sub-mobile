@@ -1,0 +1,33 @@
+.ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: radiate 4.2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.ring2 {
+  animation-delay: 1.4s;
+}
+
+.ring3 {
+  animation-delay: 2.8s;
+}
+
+@keyframes radiate {
+  0% {
+    transform: scale(0.15);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+    opacity: 0.15;
+    transform: scale(0.7);
+  }
+}

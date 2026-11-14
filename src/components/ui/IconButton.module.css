@@ -1,0 +1,25 @@
+.btn {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.raised {
+  box-shadow:
+    inset 0 0 0 1.5px rgba(11, 11, 59, 0.08),
+    0 6px 18px rgba(11, 11, 59, 0.12);
+}
+
+.outline {
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+}

@@ -1,0 +1,78 @@
+/* Shared text styles for screens. */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Red uppercase line above a heading, e.g. "YOUR OFFER IS READY". */
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.heading {
+  margin: 6px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.sub b,
+.sub a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Small print under a form, e.g. the Terms of Service line. */
+.smallPrint {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.smallPrint a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.inlineLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.error {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--red);
+}
+
+/* An error shown above a footer button. */
+.footerError {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--red);
+}

@@ -1,0 +1,53 @@
+{
+  "name": "cityview-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CityView (Apo, Abuja) buyer web app by LCR: listing, title papers, plot purchase.",
+  "scripts": {
+    "dev": "node init && next dev",
+    "build": "node init && next build",
+    "start": "node init && next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run build"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.10",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fontsource/instrument-sans": "5.2.6",
+    "@fontsource/jetbrains-mono": "5.2.6",
+    "@tanstack/react-query": "^5.107.1",
+    "axios": "^1.20.0",
+    "cookies-next": "^6.1.1",
+    "formik": "^2.4.9",
+    "jose": "^6.2.17",
+    "next": "15.5.29",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "react-international-phone": "^4.8.0",
+    "uuid": "^14.0.3",
+    "yup": "^1.7.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.1",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.18.0",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.29",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "overrides": {
+    "postcss": "8.5.32",
+    "sharp": "0.35.5"
+  }
+}

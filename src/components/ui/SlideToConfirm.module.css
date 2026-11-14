@@ -1,0 +1,115 @@
+.track {
+  position: relative;
+  height: 64px;
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--soft);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.track:focus-visible {
+  box-shadow: 0 0 0 3px rgba(74, 74, 254, 0.35);
+}
+
+.text {
+  position: relative;
+  padding: 0 62px;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.chevrons {
+  position: absolute;
+  right: 22px;
+  display: flex;
+  color: var(--ink);
+}
+
+.chevrons svg {
+  animation: nudge 1.4s ease-in-out infinite;
+}
+
+.chevrons svg + svg {
+  animation-delay: 0.2s;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+}
+
+.knob {
+  position: absolute;
+  left: 4.5px;
+  top: 4.5px;
+  z-index: 2;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue);
+  color: var(--white);
+  cursor: grab;
+  transition:
+    transform 0.3s var(--ease),
+    background 0.3s;
+}
+
+.fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 32px;
+  background: var(--blue-soft);
+  transition: width 0.3s var(--ease);
+}
+
+.dragging .knob,
+.dragging .fill {
+  transition: none;
+  cursor: grabbing;
+}
+
+.read {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(74, 74, 254, 0.08);
+  transition: width 0.15s linear;
+}
+
+.locked .knob {
+  background: #c9c9d6;
+  cursor: not-allowed;
+}
+
+.locked .text {
+  color: var(--muted);
+}
+
+.done .knob {
+  background: var(--green);
+}
+
+.done .fill {
+  background: rgba(31, 175, 90, 0.14);
+}

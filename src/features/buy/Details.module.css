@@ -1,0 +1,240 @@
+.tabs {
+  display: flex;
+  gap: 18px;
+  margin: 18px -24px 0;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs button {
+  flex: none;
+  margin-bottom: -1px;
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tabs button[aria-selected='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* Small red text buttons: Add photo, Add ID, Change */
+.redLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--red);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.small {
+  font-size: 14px;
+}
+
+/* Passport photo */
+.passport {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px 0 6px;
+}
+
+.passportCircle {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.passportImage {
+  display: block;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+}
+
+.passportImage img,
+.passportImage svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.passportImage img {
+  animation: photo-in 0.4s ease;
+}
+
+.passportBadge {
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--white);
+  box-shadow: 0 0 0 3px var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passportText {
+  flex: 1;
+  min-width: 0;
+}
+
+.passportText b {
+  display: block;
+  font-size: 17px;
+}
+
+.passportText > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.passportText .redLink {
+  margin-top: 8px;
+  font-size: 14.5px;
+}
+
+.ok {
+  color: var(--green-text) !important;
+}
+
+.bad {
+  color: var(--red) !important;
+}
+
+@keyframes photo-in {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+/* ID */
+.idRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 14px;
+  border-bottom: 1.5px solid var(--rule);
+}
+
+.idRowBad {
+  border-bottom-color: var(--red);
+}
+
+.idEmpty {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  color: rgba(11, 11, 59, 0.4);
+}
+
+.idDone {
+  flex: 1;
+  min-width: 0;
+}
+
+.idDone b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15.5px;
+}
+
+.idDone i {
+  display: block;
+  margin-top: 1px;
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.idThumb {
+  width: 60px;
+  height: 40px;
+  flex: none;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 1px rgba(11, 11, 59, 0.1);
+}
+
+.idThumbSmall {
+  width: 42px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.idChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.idChips span {
+  padding: 5px 10px;
+  border-radius: 99px;
+  background: var(--soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.idBack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.idBackDone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.idNote {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--red);
+}

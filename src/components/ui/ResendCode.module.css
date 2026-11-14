@@ -1,0 +1,10 @@
+.line {
+  margin: 16px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.time {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}

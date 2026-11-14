@@ -1,0 +1,54 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--white);
+}
+
+.slide {
+  animation: screen-in 0.38s var(--ease) both;
+}
+
+.fade {
+  animation: fade-up 0.5s ease both;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 10px;
+  background: var(--white);
+}
+
+.bar.compact {
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  padding-bottom: 4px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.spacer {
+  width: 42px;
+  flex: none;
+}
+
+.body {
+  flex: 1 0 auto;
+  padding: 0 24px 16px;
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  padding: 16px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--white) 26%);
+}

@@ -14,7 +14,7 @@ import { IdUpload } from './IdUpload';
 import { PassportPhoto } from './PassportPhoto';
 import { useBuyGuard, usePurchaseKicker } from './useBuyGuard';
 import { type NextOfKinUpdateValues, type ProjectDetails, type UserDocument, type UserUpdateValues } from '@/types';
-import countries, { getCountry, getCountryByName } from '@/constants/country';
+import countries, { getCountry } from '@/constants/country';
 import { useFormik } from 'formik';
 
 import styles from './Details.module.css';

@@ -14,7 +14,6 @@ import { useBuyEmail } from './BuyEmailContext';
 
 /** Buying, step 2: the 6-digit code from the email. */
 export function VerifyScreen({ slug }: { slug: string }) {
-  const ready = useBuyGuard(slug, { terms: true });
   const router = useRouter();
   const { email } = useBuyEmail();
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -28,8 +27,6 @@ export function VerifyScreen({ slug }: { slug: string }) {
     const t = setTimeout(() => input.current?.focus({ preventScroll: true }), 400);
     return () => clearTimeout(t);
   }, []);
-
-  if (!ready) return null;
 
   const confirm = async (value = code) => {
     if (value.length === 6) {

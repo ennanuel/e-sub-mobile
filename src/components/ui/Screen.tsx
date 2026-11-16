@@ -62,7 +62,7 @@ export function Screen({ back, backLabel = 'Back', title, actions, footer, entra
         {actions ?? <span className={styles.spacer} />}
         <NavProgress isShowing={isRerouting} />
       </div>
-      <div className={styles.body} style={{position: 'relative'}}>
+      <div className={styles.body} style={{position: 'relative', paddingTop: '16px'}}>
         {isRerouting && <Box width="100%" height="100%" position="absolute" top="0" left="0" bg='rgba(255, 255, 255, 0.3)' zIndex={9999} />}
         {children
         }</div>

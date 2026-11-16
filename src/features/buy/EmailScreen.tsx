@@ -8,26 +8,25 @@ import text from '@/components/ui/text.module.css';
 import { links } from '@/lib/links';
 import { routes } from '@/lib/routes';
 import { isEmail } from '@/lib/validation';
-import { useBuyGuard, usePurchaseKicker } from './useBuyGuard';
+import { usePurchaseKicker } from './useBuyGuard';
 import { useBuyEmail } from './BuyEmailContext';
 import type { ProjectDetails } from '@/types';
 import { useSession } from '@/lib/session';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /** Buying, step 1: the email (skipped when it was confirmed earlier in this visit). */
 export function EmailScreen({ listing }: { listing: ProjectDetails }) {
   const slug = listing?.id?.toString();
-  const ready = useBuyGuard(slug, { terms: true });
   const kicker = usePurchaseKicker(listing);
   const router = useRouter();
+
+  const [isRouting, setIsRouting] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { isRequestingOtp, isLoggingIn, checkEmailStatus } = useSession();
 
   const { email, setEmail } = useBuyEmail();
-
-  if (!ready) return null;
 
   const valid = isEmail(email);
   const next = async () => {
@@ -37,6 +36,7 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
         onChecked({ userExists }) {
           if (userExists) router.push(routes.buy.verify(slug));
           else router.push(routes.buy.details(slug));
+          setIsRouting(true);
         },
         onError(msg) {
           setErrorMessage(msg);
@@ -45,12 +45,18 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      setIsRouting(false)
+    }
+  }, [])
+
   return (
     <Screen
       label="Your email"
       back={routes.buy.terms(slug)}
       footer={
-        <Button disabled={!valid} loading={isRequestingOtp || isLoggingIn} loadingText="Sending" onClick={() => void next()}>
+        <Button disabled={!valid} loading={isRequestingOtp || isLoggingIn || isRouting} loadingText="Sending" onClick={() => void next()}>
           Next
         </Button>
       }

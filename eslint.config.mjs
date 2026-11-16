@@ -12,8 +12,6 @@ const config = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
-      // Photos and paper scans are plain <img>: they come from the API's storage (often short-lived signed URLs)
-      // and from local previews of picked files. Move to next/image once the image host is fixed.
       '@next/next/no-img-element': 'off',
     },
   },

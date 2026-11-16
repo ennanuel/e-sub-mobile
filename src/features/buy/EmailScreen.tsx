@@ -13,12 +13,15 @@ import { useBuyEmail } from './BuyEmailContext';
 import type { ProjectDetails } from '@/types';
 import { useSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
+import { usePurchase } from '@/lib/purchase';
 
 /** Buying, step 1: the email (skipped when it was confirmed earlier in this visit). */
 export function EmailScreen({ listing }: { listing: ProjectDetails }) {
   const slug = listing?.id?.toString();
   const kicker = usePurchaseKicker(listing);
   const router = useRouter();
+
+  const purchase = usePurchase();
 
   const [isRouting, setIsRouting] = useState(false);
 
@@ -29,6 +32,7 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
   const { email, setEmail } = useBuyEmail();
 
   const valid = isEmail(email);
+
   const next = async () => {
     if (valid) {
       checkEmailStatus({
@@ -44,6 +48,10 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
       });
     }
   };
+
+  useEffect(() => {
+    if (!purchase?.unitId) router.push(routes.listing(slug))
+  }, [purchase])
 
   useEffect(() => {
     return () => {

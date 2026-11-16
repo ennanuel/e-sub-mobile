@@ -3,6 +3,21 @@ import authAxios from './utils/axios';
 import { NextOfKin, NextOfKinUpdateValues, User, UserUpdateValues } from '@/types';
 import { AxiosError, isAxiosError } from 'axios';
 
+const formatDobToBackend = (dob: string) => {
+  const [year, month, day] = dob?.split(/[^0-9]/ig);
+  return `${day}/${month}/${year}`
+}
+
+function formatBackendPayload<K>(value: K, field: string):K {
+  if (field?.includes('phone') && typeof value === 'string') {
+    return value?.replace(/[^0-9]/, '')?.trim() as K
+  } if (field === 'date_of_birth' && typeof value === 'string') {
+    return formatDobToBackend(value) as K
+  } else {
+    return value;
+  }
+}
+
 export const attemptLogin = async (payload: { email: string }): Promise<{ userExists: boolean; errorMessage: string | null }> => {
   let errorMessage: string | null = null;
   let userExists = false;
@@ -28,7 +43,8 @@ export const attemptLogin = async (payload: { email: string }): Promise<{ userEx
 
 export const registerUser = async (payload: UserUpdateValues & { ref_id?: string }) => {
   const storeName = getStoreName();
-  const response = await authAxios.post(`${BaseURL_TWO}/store/customers/`, { ...payload, store_name: storeName });
+  const body = Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, formatBackendPayload(value, key)]).filter((entry) => !!entry?.[1]?.length));
+  const response = await authAxios.post(`${BaseURL_TWO}/store/customers/`, { ...body, store_name: storeName });
   return response.data;
 };
 
@@ -97,6 +113,9 @@ export const updateUserDetails = async (
     .filter((fieldPayload) => Object.values(fieldPayload[1]).some(Boolean))
     .map(([field, values]) => ({ [field]: values }));
   const storeName = getStoreName();
-  await Promise.all(body.map((payload) => authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, payload)));
+  await Promise.all(body.map((payload) => {
+    const body = Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, formatBackendPayload(value, key)].filter((entry) => !!entry[1]?.length)));
+    return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, {...body})
+  }));
   return;
 };

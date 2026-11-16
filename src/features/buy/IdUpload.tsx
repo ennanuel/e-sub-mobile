@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, TickCircle } from '@/components/icons';
 import { LoadingDots } from '@/components/ui/Button';
 import { FieldShell, PillGroup } from '@/components/ui/Field';
@@ -8,13 +8,14 @@ import { errorMessage } from '@/lib/api';
 import { shrinkImage } from '@/lib/image';
 import styles from './Details.module.css';
 import { UserDocument, UserDocumentVariant } from '@/types';
-import { Box, Center } from '@chakra-ui/react';
+import { Center } from '@chakra-ui/react';
 import { uploadFiles } from '@/api/store';
 import { PiFolderOpen } from 'react-icons/pi';
 
 type Side = 'front' | 'back';
 
 interface IdUploadProps {
+  handleIsUploading: (isUploading: boolean) => void;
   documents: UserDocument[];
   onChange: (documents: UserDocument[]) => void;
   invalid?: boolean;
@@ -30,6 +31,14 @@ const DOC_TYPES: readonly { label: string; value: UserDocumentVariant }[] = [
 
 const formatBase64 = (base64: string) => base64?.replace('data:', '')?.replace(/^.+,/, '');
 
+const getBase64File = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const fileReader = new FileReader();
+  fileReader.onload = () => resolve(fileReader.result.toString());
+  fileReader.onerror = (err) => reject(err);
+
+  fileReader.readAsDataURL(file)
+})
+
 const IMAGE_FILE_EXTENSIONS_RGX = /.(jpg|jpeg|webp|svg|png)$/i;
 
 const isFileStringBase64 = (fileStr: string | null) => fileStr?.startsWith('data:');
@@ -38,7 +47,7 @@ const isFileImage = (file: File) => file.type.includes('image');
 const isFileUrlImage = (fileString: string) => IMAGE_FILE_EXTENSIONS_RGX.test(fileString);
 const isBase64FileImage = (fileString: string) => fileString?.startsWith('data:image/');
 
-export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadProps) {
+export function IdUpload({ documents, onChange, invalid, handleIsUploading, shakeKey }: IdUploadProps) {
   const input = useRef<HTMLInputElement>(null);
   const side = useRef<Side>('front');
   const [uploading, setUploading] = useState<Side | null>(null);
@@ -72,14 +81,15 @@ export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadPro
     setError('');
     try {
       const small = isFileImage(file) ? await shrinkImage(file, { maxSide: 900, quality: 0.8 }) : file;
-      const uploadedFileRes = await uploadFiles([file]);
+      const uploadedFileRes = await uploadFiles([small]);
+      const preview = await getBase64File(file);
       const uploadedFile = uploadedFileRes[0];
       const documentIndex = s == 'back' ? 1 : 0;
       const documentsUpdate = [...documents];
       
       documentsUpdate[documentIndex] = {
         document: uploadedFile,
-        image: URL.createObjectURL(small),
+        image: preview,
         document_name: file.name,
         document_type: selectedIdType,
         created_at: new Date().toISOString(),
@@ -92,6 +102,10 @@ export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadPro
       setUploading(null);
     }
   };
+
+  useEffect(() => {
+    handleIsUploading(!!uploading)
+  }, [uploading])
 
   return (
     <FieldShell label="Your ID" as="div" invalid={invalid} shakeKey={shakeKey}>

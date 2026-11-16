@@ -1,4 +1,4 @@
-import { NextOfKin, User, UserUpdateValues } from '@/types';
+import { NextOfKin, NextOfKinUpdateValues, User, UserUpdateValues } from '@/types';
 import { useEffect, useState } from 'react';
 import { deleteCookies, getSession, setSession } from '../sessionmanager';
 import { AUTH_SESSION_KEY, getStoredUserDetails, STORE_DATA_KEY, TOKEN_SESSION_KEY } from '@/constants/routes';
@@ -43,31 +43,17 @@ export default function useUser() {
   const { mutate: signUpMutate, isPending: isSigningUp } = useMutation({
     mutationFn: (payload: {
       user: UserUpdateValues & { ref_id?: string };
-      nextOfKin?: NextOfKin | null;
+      nextOfKin?: NextOfKinUpdateValues | null;
       onSuccess: () => void;
       onError: (errorMsg: string) => void;
     }) =>
       new Promise<void>(async (resolve, reject) => {
         try {
-          await registerUser(payload.user);
+          const {first_name, last_name, middle_name, email} = payload.user;
+          await registerUser({first_name, last_name, middle_name, email} as UserUpdateValues);
           const onEmailCheckSuccess = () => {
-            if (payload.nextOfKin) {
-              updateUserDetail([['next_of_kin', payload.nextOfKin]], {
-                onSuccess: () => {
-                  payload.onSuccess();
-                  resolve();
-                },
-                onError: (error) => {
-                  errorHandler((error as Error).message);
-                  // location.reload();
-                },
-              });
-              payload.onSuccess();
-              resolve();
-            } else {
-              payload.onSuccess();
-              resolve();
-            }
+            payload.onSuccess();
+            resolve();
           };
           const errorHandler = (msg: string) => {
             payload?.onError(msg);
@@ -128,7 +114,8 @@ export default function useUser() {
     queryKey: ['user_details'],
     enabled: !!authToken,
     queryFn: async () => {
-      const { profile, next_of_kin } = await getUserDetails();
+      const { profile: initialProfile, next_of_kin } = await getUserDetails();
+      const profile = initialProfile ? {...initialProfile, id: (initialProfile as unknown as {user: User})?.user?.id}  : initialProfile
       setUser(profile ?? null);
       setNextOfKin(next_of_kin ?? null);
 

@@ -13,7 +13,6 @@ import { useSession } from './session';
 import { getBusinessId, getStoreName } from '@/constants/routes';
 import { isFilled, isLocalPhone } from './validation';
 import { toE164 } from './format';
-import { DEFAULT_USER_DATA } from '@/constants/fields';
 import { routes } from './routes';
 import { useRouter } from 'next/navigation';
 
@@ -73,7 +72,7 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
   const router = useRouter();
   const [state, setState] = useState<Purchase>(initial);
 
-  const { isUpdatingUserDetail, updateUserDetail, isSigningUp, signUp, user, token } = useSession();
+  const { isUpdatingUserDetail, updateUserDetail, isSigningUp, user, token } = useSession();
 
   const start = useCallback((listingId: number, unitId: number, paymentPlanId: number | null) => {
     // A new plot or plan starts a new purchase, but keeps what was typed on Your details.
@@ -145,36 +144,27 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
         type: 'WHOLE' as const,
       };
 
-      const cbWrapper =
-        user && token
-          ? (cb: () => void) => cb()
-          : (cb: () => void) => {
-              signUp({ user: { ...DEFAULT_USER_DATA, ...valuesToSubmit.user }, onSuccess: cb, onError: reject }, {});
-            };
-
-      cbWrapper(() =>
-        updateUserDetail(
-          [
-            ['profile', details.user],
-            ['next_of_kin', details.nextOfKin],
-          ],
-          {
-            onSuccess: () => {
-              mutate(objToSubmit, {
-                onSuccess: () => {
-                  resolve();
-                },
-                onError: (err) => {
-                  reject(err);
-                },
-              });
-            },
-            onError: (err) => {
-              reject(err);
-            },
+      updateUserDetail(
+        [
+          ['profile', valuesToSubmit.user],
+          ['next_of_kin', valuesToSubmit.nextOfKin],
+        ],
+        {
+          onSuccess: () => {
+            mutate(objToSubmit, {
+              onSuccess: () => {
+                resolve();
+              },
+              onError: (err) => {
+                reject(err);
+              },
+            });
           },
-        ),
-      );
+          onError: (err) => {
+            reject(err);
+          },
+        },
+      )
     });
 
   const value = useMemo(

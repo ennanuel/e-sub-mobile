@@ -50,5 +50,5 @@ export function usePurchaseKicker(listing: ProjectDetails): string {
   const unitSize = unit?.unit_size ? `${unit.unit_size}${!/[a-z]/i.test(unit.unit_size) ? ' sqm' : ''}` : '';
   const months = paymentPlan?.payment_period_in_months;
 
-  return unit ? `${listing?.name} · ${unitSize ? ' · '  : ''}${planLabel(months)}` : listing.name;
+  return unit ? `${listing?.name} · ${unitSize ? `${unitSize} · `  : ''}${planLabel(months)}` : listing.name;
 }

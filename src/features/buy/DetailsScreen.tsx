@@ -12,15 +12,17 @@ import { useSession } from '@/lib/session';
 import { isEmail, isFilled, isLocalPhone } from '@/lib/validation';
 import { IdUpload } from './IdUpload';
 import { PassportPhoto } from './PassportPhoto';
-import { useBuyGuard, usePurchaseKicker } from './useBuyGuard';
-import { type NextOfKinUpdateValues, type ProjectDetails, type UserDocument, type UserUpdateValues } from '@/types';
+import { usePurchaseKicker } from './useBuyGuard';
+import { NextOfKin, User, type NextOfKinUpdateValues, type ProjectDetails, type UserDocument, type UserUpdateValues } from '@/types';
 import countries, { getCountry } from '@/constants/country';
 import { useFormik } from 'formik';
 
 import styles from './Details.module.css';
 import { DEFAULT_NOK_DATA, DEFAULT_USER_DATA } from '@/constants/fields';
-import { Grid } from '@chakra-ui/react';
 import { getCountryDetailsByName } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { useBuyEmail } from './BuyEmailContext';
+import { Box } from '@chakra-ui/react';
 
 const TABS: readonly string[] = ['Basic info', 'More info', 'Next of kin'];
 const NEXT_LABEL: readonly string[] = ['Next: More info', 'Next: Next of kin', 'Continue'];
@@ -33,12 +35,12 @@ const COUNTRIES = countries.map((country) => country.name);
 type Key = `user.${keyof UserUpdateValues}` | `nextOfKin.${keyof NextOfKinUpdateValues}`;
 
 /** Which fields are wrong on a tab. */
-function problems(tab: number, d: DetailsDraft): Key[] {
+function problems(tab: number, d: DetailsDraft, storeData: {user: User; nextOfKin: NextOfKin} | null): Key[] {
   const bad: Key[] = [];
   const { user, nextOfKin } = d;
   if (tab === 0) {
-    if (!isFilled(user?.first_name)) bad.push('user.first_name');
-    if (!isFilled(user?.last_name)) bad.push('user.last_name');
+    if (!isFilled(user?.first_name) && !isFilled(storeData.user.first_name)) bad.push('user.first_name');
+    if (!isFilled(user?.last_name) && !isFilled(storeData?.user?.last_name)) bad.push('user.last_name');
     if (!isLocalPhone(user?.phone ?? '')) bad.push('user.phone');
   } else if (tab === 1) {
     if (!isFilled(user?.address)) bad.push('user.address');
@@ -48,32 +50,54 @@ function problems(tab: number, d: DetailsDraft): Key[] {
     if (!isFilled(nextOfKin?.last_name)) bad.push('nextOfKin.last_name');
     if (!nextOfKin?.relationship) bad.push('nextOfKin.relationship');
     if (!isLocalPhone(nextOfKin.phone ?? '')) bad.push('nextOfKin.phone');
-    if (isFilled(nextOfKin.email) && !isEmail(nextOfKin.email!)) bad.push('nextOfKin.email');
+    if ((isFilled(nextOfKin.email) && !isEmail(nextOfKin.email!))) bad.push('nextOfKin.email');
   }
   return bad;
 }
 
+const USER_FIELDS_TO_POPULATE = ['avatar', 'phone', 'alternate_phone', 'nationality', 'country', 'marital_status', 'adddress', 'occupation', 'company_name', 'company_address', 'documents'];
+const NEXT_OF_KIN_FIELDS_TO_POPULATE = ['first_name', 'last_name', 'relationship', 'phone', 'alternate_phone', 'email', 'phone'];
+
 export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const slug = listing.id?.toString();
-  const ready = useBuyGuard(slug, { terms: true, session: true });
-
   const kicker = usePurchaseKicker(listing);
+  const [isRouting, setIsRouting] = useState(false);
 
   const router = useRouter();
   const purchase = usePurchase();
+  const {email} = useBuyEmail();
 
-  const { user, nextOfKin } = useSession();
+  const { user, nextOfKin, isLoadingUserDetails, requestOtp, isSigningUp, isRequestingOtp, signUp } = useSession();
 
   const formik = useFormik<{ user: UserUpdateValues; nextOfKin: NextOfKinUpdateValues }>({
     initialValues: { user: { ...DEFAULT_USER_DATA }, nextOfKin: { ...DEFAULT_NOK_DATA } },
     onSubmit: () => {
-      purchase.createSubscription();
+      if (user){
+        purchase.createSubscription().then(() => {
+          setIsRouting(true);
+          router.push(routes.buy.offer(slug))
+        }).catch((err) => {
+          setError((err as Error)?.message)
+        })
+      } else {
+        signUp({user: {...formik.values.user, email}, nextOfKin: formik.values.nextOfKin, onError: (msg) => {
+          setError(msg)
+        }, onSuccess: () => {
+          requestOtp({email}, {onSuccess: () => {
+            router.push(routes.buy.verify(slug));
+            setIsRouting(true);
+          }, onError: (errorMessage) => {
+            setError(errorMessage.message)
+          }})
+        }})
+      }
     },
   });
 
   const isSubmitting = formik.isSubmitting || purchase.isSubmitting;
 
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingDocs, setIsUploadingDocs] = useState(false);
 
   const countryCode = useMemo(() => {
     const storedCountry = getCountry();
@@ -91,6 +115,19 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const [error, setError] = useState('');
 
   const { saveDraft } = purchase;
+
+  useEffect(() => {
+    if (!purchase?.unitId) {
+      router.push(routes.listing(slug))
+    } else if (!user && !isLoadingUserDetails && !email) router.replace(routes.buy.email(slug));
+  }, [isLoadingUserDetails, user, email, purchase]);
+  
+  useEffect(() => {
+    return () => {
+      setIsRouting(false)
+    }
+  }, [])
+
   useEffect(() => {
     saveDraft(formik.values);
   }, [formik.values, saveDraft]);
@@ -103,18 +140,32 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   }, [tries]);
 
   useEffect(() => {
-    if (!Object.values(formik.values.user).some(Boolean) && user) {
-      formik.setValues((prev) => ({ ...prev, user: { ...prev.user, ...user }, nextOfKing: { ...prev.nextOfKin, ...nextOfKin } }));
-    }
-  }, [user, nextOfKin, formik]);
+    const userToUpdate: Partial<UserUpdateValues> = {};
+    const nextOfKinUpdate: Partial<NextOfKinUpdateValues> = {};
 
-  if (!ready || !user) return null;
+    if (user) {
+      for (let [key, value] of Object.entries(user)) {
+        if (USER_FIELDS_TO_POPULATE.includes(key) && value) {
+          userToUpdate[key] = value;
+        }
+      }
+    }
+    if (nextOfKin) {
+      for (let [key, value] of Object.entries(nextOfKin)) {
+        if (NEXT_OF_KIN_FIELDS_TO_POPULATE.includes(key) && value) {
+          nextOfKinUpdate[key] = value
+        }
+      }
+    }
+
+    formik.setValues((prev) => ({user: {...prev.user, ...userToUpdate}, nextOfKin: {...prev.nextOfKin, ...nextOfKinUpdate}}));
+  }, [user, nextOfKin]);
 
   const invalid = (key: Key) => bad.includes(key);
 
   /** Check a tab; on failure mark the fields, shake them and focus the first. */
   const passes = (t: number) => {
-    const p = problems(t, formik.values);
+    const p = problems(t, formik.values, {user, nextOfKin});
     if (p.length) {
       setTab(t);
       setBad(p);
@@ -144,12 +195,13 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
       footer={
         <>
           {error && <p className={text.footerError}>{error}</p>}
-          <Button loading={isSubmitting} disabled={isUploadingAvatar} loadingText="Preparing your offer" onClick={() => void next()}>
+          <Button loading={isSubmitting || isRouting || isSigningUp || isRequestingOtp} disabled={isUploadingAvatar || isUploadingDocs} loadingText="Preparing your offer" onClick={() => void next()}>
             {NEXT_LABEL[tab]}
           </Button>
         </>
       }
     >
+      {isRouting && <Box position="absolute" top="0" left="0" width="100%" height="100%" zIndex={9999} background="rgba(255, 255, 255, 0.3)" />}
       <div className={text.kicker}>{kicker}</div>
       <h1 className={text.heading}>Your details</h1>
 
@@ -168,7 +220,7 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             handleIsUploading={setIsUploadingAvatar}
             onChange={setFieldValue('user.avatar')}
           />
-          <TextField
+          {!user?.first_name && <TextField
             label="First name"
             placeholder="Type your first name"
             autoComplete="given-name"
@@ -176,15 +228,15 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             onChange={setFieldValue('user.first_name')}
             invalid={invalid('user.first_name')}
             shakeKey={tries}
-          />
-          <TextField
+          />}
+          {Boolean(!user?.first_name && !user?.last_name) && <TextField
             label="Middle name"
             placeholder="Optional"
             autoComplete="additional-name"
             value={formik.values.user.middle_name ?? ''}
             onChange={setFieldValue('user.middle_name')}
-          />
-          <TextField
+          />}
+          {!user?.last_name && <TextField
             label="Last name"
             placeholder="Type your last name"
             autoComplete="family-name"
@@ -192,13 +244,13 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             onChange={setFieldValue('user.last_name')}
             invalid={invalid('user.last_name')}
             shakeKey={tries}
-          />
-          <PillGroup
+          />}
+          {!user?.gender && <PillGroup
             label="Gender"
             options={GENDERS}
             value={formik.values.user.gender}
             onChange={(gender) => setFieldValue('user.gender')(gender as string)}
-          />
+          />}
           <PhoneField
             label="Phone"
             autoComplete="tel-national"
@@ -228,8 +280,8 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             list="countries"
             placeholder="e.g. Nigeria"
             autoComplete="country-name"
-            value={formik.values.user.nationality}
-            onChange={setFieldValue('user.nationality')}
+            value={formik.values.user.country}
+            onChange={setFieldValue('user.country')}
           />
           <datalist id="nationalities">
             {NATIONALITIES.map((n) => (
@@ -241,12 +293,12 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
               <option key={n} value={n} />
             ))}
           </datalist>
-          <TextField
+          {!user?.date_of_birth && <TextField
             label="Date of birth"
             type="date"
             value={formik.values.user.date_of_birth}
             onChange={setFieldValue('user.date_of_birth')}
-          />
+          />}
           <PillGroup
             label="Marital status"
             options={MARITAL}
@@ -285,31 +337,25 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             value={formik.values.user.company_address}
             onChange={setFieldValue('user.company_address')}
           />
-          <IdUpload documents={formik.values.user.documents} onChange={setFieldValue('user.documents')} shakeKey={tries} />
+          <IdUpload handleIsUploading={setIsUploadingDocs} documents={formik.values.user.documents} onChange={setFieldValue('user.documents')} shakeKey={tries} />
         </div>
       )}
 
       {tab === 2 && (
         <div role="tabpanel" aria-label="Next of kin">
-          <Grid gridTemplateColumns="1fr 1fr" width="100%" gap="20px">
-            <TextField
-              label="Their first name"
-              placeholder="John"
-              value={formik.values.nextOfKin.first_name}
-              onChange={setFieldValue('nextOfKin.first_name')}
-              invalid={invalid('nextOfKin.first_name')}
-              shakeKey={tries}
-            />
-
-            <TextField
-              label="Their last name"
-              placeholder="Doe"
-              value={formik.values.nextOfKin.last_name}
-              onChange={setFieldValue('nextOfKin.last_name')}
-              invalid={invalid('nextOfKin.last_name')}
-              shakeKey={tries}
-            />
-          </Grid>
+          <TextField
+            label="Their full name"
+            placeholder="Type their full name"
+            value={`${formik.values.nextOfKin.first_name ?? ''}${formik.values.nextOfKin.last_name ? ` ${formik.values.nextOfKin.last_name}` : ''}`}
+            onChange={(fullName) => {
+              const [initialFirstName, lastName] = fullName?.split(/\s+/);
+              const firstName = /\s/.test(fullName) && !lastName ? `${initialFirstName} ` : initialFirstName;
+              setFieldValue('nextOfKin.first_name')(firstName)
+              setFieldValue('nextOfKin.last_name')(lastName)
+            }}
+            invalid={invalid('nextOfKin.first_name')}
+            shakeKey={tries}
+          />
           <PillGroup
             label="How they are related to you"
             options={RELATIONSHIPS}

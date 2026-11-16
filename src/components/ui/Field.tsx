@@ -54,7 +54,7 @@ export function PhoneField({ label, countryCode, value, onChange, invalid, shake
     <FieldShell label={label} invalid={invalid} shakeKey={shakeKey}>
       <span className={styles.phoneRow}>
         <span className={styles.code} aria-hidden="true">
-          +{countryCode}
+          {countryCode}
         </span>
         <input
           className={styles.input}

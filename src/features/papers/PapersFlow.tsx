@@ -17,8 +17,6 @@ import { SignInSheet } from './SignInSheet';
 import { ViewOnlyNotice } from './ViewOnlyNotice';
 import styles from './PapersFlow.module.css';
 import { Paperwork, ProjectDetails } from '@/types';
-import { useQuery } from '@tanstack/react-query';
-import { getESubDetails } from '@/api/equity';
 
 interface PapersFlowProps {
   listing: ProjectDetails;
@@ -36,15 +34,6 @@ export function PapersFlow({ listing, paperwork, openPaper }: PapersFlowProps) {
   const hideNotice = () => {
     setIsShowingNotice(false);
   };
-
-  useQuery({
-    queryKey: ['123'],
-    queryFn: () => {
-      getESubDetails().then((res) => {
-        console.warn(res);
-      });
-    },
-  });
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [slideKey, setSlideKey] = useState(0);

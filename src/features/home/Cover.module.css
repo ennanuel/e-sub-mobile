@@ -64,6 +64,11 @@
 
 .title span {
   display: block;
+  letter-spacing: -0.06em;
+  line-height: 0.86;
+}
+
+.title span:last {
   color: var(--blue);
 }
 

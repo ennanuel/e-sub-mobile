@@ -15,7 +15,7 @@ import { FaqSection } from '../faq/FaqSection';
 import { PhotoViewer } from './PhotoViewer';
 import styles from './Listing.module.css';
 import { BaseUser, ProjectDetails } from '@/types';
-import { Avatar, Box, List, ListItem, Spinner, Stack } from '@chakra-ui/react';
+import { Avatar, Box, List, ListItem, SkeletonText, Spinner, Stack, StackDivider } from '@chakra-ui/react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { getProjectDetails, loadListingPaperwork, loadProjectUnits } from '@/lib/load';
 import { NavProgress } from '@/components/ui/Screen';
@@ -44,19 +44,6 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
   const startNavigation = () => {
     setIsNavigating(true);
   }
-
-  useQuery({
-    queryKey: ['listingdetail'],
-    queryFn:async () => {
-      try {
-        const res = await getProjectDetails(detail?.id?.toString());
-        console.warn(res);
-        return res;
-      } catch (error) {
-        console.log('error', error)
-      }
-    }
-  })
 
   const { isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, data } = useInfiniteQuery({
     initialPageParam: 1,
@@ -212,6 +199,16 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
           <Box width="100%" ref={unitsContainerRef}>
             <h2 className={`label ${styles.sectionLabel}`}>Available units</h2>
             <Stack gap="24px">
+              {
+                isLoading ? <Stack width='100%' spacing='24px' divider={<StackDivider width='100%' height='1px' border='none' bg='#E4E4E7' />}>
+                  {
+                    [1, 2, 3].map((item) => (
+                      <Box width="100%" key={item}>
+                        <SkeletonText skeletonHeight='16px' width='100%' maxWidth='200px' startColor='#E4E4E7' endColor='#FAFAF5' />
+                      </Box>
+                    ))
+                  }
+                </Stack>:
               <List className={styles.units}>
                 {units?.map((unit) => (
                   <ListItem key={unit.id}>
@@ -243,6 +240,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
                   </ListItem>
                 ))}
               </List>
+              }
               {isFetchingNextPage && <Spinner />}
             </Stack>
           </Box>

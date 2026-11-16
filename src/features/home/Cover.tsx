@@ -40,7 +40,7 @@ export const Cover = forwardRef<HTMLDivElement, CoverProps>(function Cover(
           <span className={styles.badge}>{companyName ?? 'NEW DEVELOPMENT'}</span>
         </div>
         <h1 className={styles.title}>
-          {place}
+          <span>{place}</span>
           <span>{city}</span>
         </h1>
         <p className={styles.tagline}>

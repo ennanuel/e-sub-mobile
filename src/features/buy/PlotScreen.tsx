@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Share } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -31,8 +31,8 @@ export function calculatePlan(unit: ProjectBundle, selectedPlan: BundlePaymentPl
   const periodicPayment = Number(selectedPlan?.periodic_payment);
   const planType = selectedPlan?.plan_type;
   const payFreq = selectedPlan?.payment_frequency;
-  const percentage = isOutright ? 100 : Math.round((total / total - dueToday) * 100);
   const balance = total - dueToday;
+  const percentage = isOutright ? 100 : Math.round((dueToday / total) * 100);
 
   const endDate = new Date();
   if (selectedPlan?.payment_period_in_months) {
@@ -58,6 +58,8 @@ export function PlotScreen({ listing, unit }: PlotScreenProps) {
   const purchase = usePurchase();
 
   const { user, token } = useSession();
+
+  const [isRouting, setIsRouting] = useState(false);
 
   const { isLoading: isLoadingPaymentPlans, data: paymentPlansData } = useQuery({
     queryKey: ['unit_payment_plans', unit?.id],
@@ -89,6 +91,7 @@ export function PlotScreen({ listing, unit }: PlotScreenProps) {
   };
 
   const start = () => {
+    setIsRouting(true);
     purchase.start(listing.id, unit.id, selectedPlanId);
 
     if (user && token) {
@@ -97,6 +100,13 @@ export function PlotScreen({ listing, unit }: PlotScreenProps) {
       router.push(routes.buy.email(listing?.id?.toString()));
     }
   };
+
+  useEffect(() => {
+
+    return () => {
+      setIsRouting(false)
+    }
+  }, [])
 
   if (isLoadingPaymentPlans)
     return (
@@ -115,7 +125,7 @@ export function PlotScreen({ listing, unit }: PlotScreenProps) {
           <Share size={19} />
         </IconButton>
       }
-      footer={<Button onClick={start}>{isOutright ? `Pay ${currencyShort(unitPrice, currency)}` : 'Start this plan'}</Button>}
+      footer={<Button onClick={start} loading={isRouting}>{isOutright ? `Pay ${currencyShort(unitPrice, currency)}` : 'Start this plan'}</Button>}
     >
       <div className={styles.kicker}>
         {listing?.name} · {unitSize}
@@ -143,8 +153,8 @@ export function PlotScreen({ listing, unit }: PlotScreenProps) {
             <span className={styles.muted}>{currencyShort(selectedPlanSummary?.total, currency)}</span>
           </div>
           <div className={styles.bar} aria-hidden="true">
-            <span className={styles.barDeposit} style={{ flex: selectedPlanSummary?.percentage }} />
-            <span className={styles.barRest} style={{ flex: 100 - selectedPlanSummary?.percentage }} />
+            <span className={styles.barDeposit} style={{ width: `${selectedPlanSummary?.percentage}%` }} />
+            <span className={styles.barRest} style={{ flex: `${100 - selectedPlanSummary?.percentage}%` }} />
           </div>
           <div className={styles.barKey}>
             <span style={{ minWidth: '12px' }}>

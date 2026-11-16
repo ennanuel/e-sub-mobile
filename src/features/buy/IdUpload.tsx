@@ -8,8 +8,9 @@ import { errorMessage } from '@/lib/api';
 import { shrinkImage } from '@/lib/image';
 import styles from './Details.module.css';
 import { UserDocument, UserDocumentVariant } from '@/types';
-import { Box } from '@chakra-ui/react';
+import { Box, Center } from '@chakra-ui/react';
 import { uploadFiles } from '@/api/store';
+import { PiFolderOpen } from 'react-icons/pi';
 
 type Side = 'front' | 'back';
 
@@ -75,6 +76,7 @@ export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadPro
       const uploadedFile = uploadedFileRes[0];
       const documentIndex = s == 'back' ? 1 : 0;
       const documentsUpdate = [...documents];
+      
       documentsUpdate[documentIndex] = {
         document: uploadedFile,
         image: URL.createObjectURL(small),
@@ -96,7 +98,9 @@ export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadPro
       <div className={`${styles.idRow} ${invalid ? styles.idRowBad : ''}`}>
         {front ? (
           <>
-            {isFrontFileImage ? <img className={styles.idThumb} alt="Your ID" src={frontPreview} /> : <Box className={styles.idThumb} />}
+            {isFrontFileImage ? <img className={styles.idThumb} alt="Your ID" src={frontPreview} /> : <Center className={styles.idThumb}>
+              <PiFolderOpen size={20} />
+            </Center>}
             <span className={styles.idDone}>
               <b>
                 ID added <TickCircle />
@@ -152,7 +156,9 @@ export function IdUpload({ documents, onChange, invalid, shakeKey }: IdUploadPro
                 {isBackFileImage ? (
                   <img className={styles.idThumbSmall} alt="Back of your ID" src={backPreview} />
                 ) : (
-                  <Box className={styles.idThumbSmall} />
+                  <Center className={styles.idThumbSmall}>
+                    <PiFolderOpen size={20} />
+                  </Center>
                 )}
                 <b>Back added</b>
                 <TickCircle />

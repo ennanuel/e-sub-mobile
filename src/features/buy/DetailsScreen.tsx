@@ -144,14 +144,14 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     const nextOfKinUpdate: Partial<NextOfKinUpdateValues> = {};
 
     if (user) {
-      for (let [key, value] of Object.entries(user)) {
+      for (const [key, value] of Object.entries(user)) {
         if (USER_FIELDS_TO_POPULATE.includes(key) && value) {
           userToUpdate[key] = value;
         }
       }
     }
     if (nextOfKin) {
-      for (let [key, value] of Object.entries(nextOfKin)) {
+      for (const [key, value] of Object.entries(nextOfKin)) {
         if (NEXT_OF_KIN_FIELDS_TO_POPULATE.includes(key) && value) {
           nextOfKinUpdate[key] = value
         }

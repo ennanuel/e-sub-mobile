@@ -3,8 +3,9 @@ import { cache } from 'react';
 import { api } from './api';
 import authAxios from '@/api/utils/axios';
 import { BaseURL_ONE, BaseURL_TWO, getStoreName } from '@/constants/routes';
-import { BundlePaymentPlanResponse, PaperworkResponse, ProjectBundle, ProjectBundleResponse, ProjectDetailResponse } from '@/types';
+import { BaseUser, BundlePaymentPlanResponse, PaperworkResponse, ProjectBundle, ProjectBundleResponse, ProjectDetailResponse, ProjectDetails } from '@/types';
 import { getESubDetails } from '@/api/equity';
+import { AxiosError } from 'axios';
 
 export const getUnitDetails = async (listingId: string, unitId: string) => {
   let unitDetails: ProjectBundle | null = null;
@@ -35,14 +36,21 @@ export const getPaymentPlanDetails = async (bundleId: number, paymentPlanId: num
 
 export const loadDevelopment = async (listingId = ''): Promise<ProjectDetailResponse> => {
   return getESubDetails();
+  // return getProjectDetails(listingId)
+};
 
+export const getAgentDetails = async (agentId: string): Promise<BaseUser> => {
+  const response = authAxios.get(`${BaseURL_TWO}/agents/fetch-by-agent-id/${agentId}/`);
+  return (await response).data.data
+}
+
+export const getProjectDetails = async (listingId: string): Promise<ProjectDetails> => {
   const storeName = getStoreName();
 
   const url = `${BaseURL_ONE}/investment/project/${listingId}?store_name=${storeName}`;
-
   const response = await authAxios.get(url);
-  return response.data;
-};
+  return response.data?.project
+}
 
 export const loadProjectUnits = async (listingId: string, options?: { page?: number }): Promise<ProjectBundleResponse> => {
   const { page = 1 } = options ?? {};
@@ -80,7 +88,7 @@ export function titled(label: string) {
   return async function generateMetadata({ params }: SlugParams): Promise<Metadata> {
     const { slug } = await params;
     const res = await loadDevelopment(slug);
-    const project = res?.project ?? {};
+    const project = res?.project ?? ({} as ProjectDetails);
     return { title: `${label ?? ''} · ${project?.name ?? ''}` };
   };
 }

@@ -12,6 +12,9 @@ import { skyLook, skyPhase } from '@/lib/sky';
 import { Cover } from './Cover';
 import { Listing } from './Listing';
 import { ProjectDetails } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { getAgentDetails, getProjectDetails } from '@/lib/load';
+import { Center, Spinner } from '@chakra-ui/react';
 
 type Mode = 'cover' | 'moving' | 'listing';
 
@@ -29,7 +32,19 @@ const TAP_SLOP = 6;
 const easeOut = (p: number) => 1 - Math.pow(1 - p, 3);
 const easeInOut = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
-export function HomeExperience({ listing, faq, startOnListing }: { listing: ProjectDetails; faq: Faq; startOnListing: boolean }) {
+export function HomeExperience({ listing, agentId, faq, startOnListing }: { listing: ProjectDetails; faq: Faq; startOnListing: boolean; agentId: string; }) {
+  const {isLoading, data} = useQuery({
+    queryKey: ['listingDetails', listing?.id?.toString()],
+    queryFn: () => getProjectDetails(listing?.id?.toString()),
+    enabled: !!listing?.id?.toString()
+  });
+
+  const {isLoading: isLoadingAgentDetails, data: agentDetails} = useQuery({
+    queryKey: ['agentDetails', agentId],
+    queryFn: () => getAgentDetails(agentId),
+    enabled: !!agentId,
+  });
+  
   const [sky, setSky] = useState(() => skyLook('up'));
   useEffect(() => {
     setSky(skyLook(skyPhase()));
@@ -157,6 +172,8 @@ export function HomeExperience({ listing, faq, startOnListing }: { listing: Proj
     };
   }, [render, settle]);
 
+  if (isLoading) return <Center width='100%' height='100dvh'><Spinner size='xl' ringColor='var(--blue)' /></Center>
+
   return (
     <>
       <Cover
@@ -167,10 +184,10 @@ export function HomeExperience({ listing, faq, startOnListing }: { listing: Proj
         hidden={mode === 'listing'}
         onGetStarted={open}
         onPointerDown={onPointerDown}
-        isPaymentPlanAvailable={listing?.payment_plan_is_available}
+        isPaymentPlanAvailable={data?.payment_plan_is_available ??  listing?.payment_plan_is_available}
         companyName={listing?.constructed_by}
       />
-      <Listing detail={listing} faq={faq} sky={sky} morphing={mode !== 'listing'} onBack={close} sheetRef={sheetRef} />
+      <Listing detail={data ?? listing} faq={faq} sky={sky} morphing={mode !== 'listing'} onBack={close} sheetRef={sheetRef} agentDetails={agentDetails ?? null} isLoadingAgentDetails={isLoadingAgentDetails} />
     </>
   );
 }

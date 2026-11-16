@@ -14,14 +14,17 @@ import type { SkyLook } from '@/lib/sky';
 import { FaqSection } from '../faq/FaqSection';
 import { PhotoViewer } from './PhotoViewer';
 import styles from './Listing.module.css';
-import { ProjectDetails } from '@/types';
-import Image from 'next/image';
-import { Box, List, ListItem, Spinner, Stack } from '@chakra-ui/react';
+import { BaseUser, ProjectDetails } from '@/types';
+import { Avatar, Box, List, ListItem, Spinner, Stack } from '@chakra-ui/react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { loadListingPaperwork, loadProjectUnits } from '@/lib/load';
+import { getProjectDetails, loadListingPaperwork, loadProjectUnits } from '@/lib/load';
+import { NavProgress } from '@/components/ui/Screen';
+import { getAmenityIcon } from '@/lib/amenity';
 
 interface ListingProps {
   detail: ProjectDetails;
+  isLoadingAgentDetails: boolean;
+  agentDetails: BaseUser | null;
   faq: Faq;
   sky: SkyLook;
   morphing: boolean;
@@ -30,14 +33,30 @@ interface ListingProps {
 }
 
 /** Page 2: the development. The white sheet scrolls up over the road scene. */
-export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing({ detail, faq, sky, morphing, onBack, sheetRef }, ref) {
+export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing({ detail, isLoadingAgentDetails, agentDetails, faq, sky, morphing, onBack, sheetRef }, ref) {
   const unitsContainerRef = useRef<HTMLDivElement>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const [photo, setPhoto] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { share, toast } = useShareLink();
 
-  const currency = detail?.currency ?? 'NGN';
+  const startNavigation = () => {
+    setIsNavigating(true);
+  }
+
+  useQuery({
+    queryKey: ['listingdetail'],
+    queryFn:async () => {
+      try {
+        const res = await getProjectDetails(detail?.id?.toString());
+        console.warn(res);
+        return res;
+      } catch (error) {
+        console.log('error', error)
+      }
+    }
+  })
 
   const { isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, data } = useInfiniteQuery({
     initialPageParam: 1,
@@ -82,6 +101,10 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
   const photos = detail?.photo_urls?.map((photo) => ({ photo })) ?? [];
   const extraPhotos = (photos?.length ?? 0) - 3;
 
+  useEffect(() => {return () => {
+    setIsNavigating(false)
+  }}, [])
+
   return (
     <div ref={ref} className={`${styles.listing} ${morphing ? styles.morphing : ''}`} aria-hidden={morphing || undefined}>
       <div className={`${styles.topBar} ${scrolled ? styles.scrolled : ''}`}>
@@ -93,6 +116,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
             <Share size={19} />
           </IconButton>
         </div>
+        <NavProgress isShowing={isNavigating} />
       </div>
 
       <div className={styles.scene}>
@@ -100,6 +124,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
       </div>
 
       <div ref={sheetRef} className={styles.sheet}>
+        {isNavigating && <Box position="absolute" top="0" left="0" width="100%" height="100%" zIndex={9999} bg='rgba(255, 255, 255, 0.3)' />}
         <span className={styles.grab} />
         <div className={`label ${styles.muted}`}>
           {detail?.constructed_by}
@@ -110,32 +135,25 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
           <BrandName name={detail.name} />
         </h1>
 
-        {/* <div className={styles.price}>
+        {detail?.starting_from && <div className={styles.price}>
           <div className={`label ${styles.muted}`}>Starting from</div>
-          <div className={styles.priceValue}>{currencyShort(detail?.starting_from, detail?.starting_from_currency ?? currency)}</div>
-        </div> */}
+          <div className={styles.priceValue}>{currencyShort(detail?.starting_from, detail?.starting_from_currency ?? detail?.currency)}</div>
+        </div>}
 
-        {!!detail?.contact_persons?.length && (
+        {Boolean(!isLoadingAgentDetails && agentDetails) && (
           <List width="100%">
-            {detail?.contact_persons?.map((contactPerson) => (
-              <ListItem key={contactPerson?.id} width="100%">
+              <ListItem width="100%">
                 <div className={styles.realtor}>
-                  <img
-                    src={contactPerson?.image ?? contactPerson?.img ?? contactPerson?.avatar}
-                    alt={contactPerson.name}
-                    width={44}
-                    height={44}
-                  />
+                  <Avatar src={agentDetails?.avatar} name={agentDetails?.first_name ?? agentDetails?.last_name} size="sm" boxSize="44px" minWidth='44px' />
                   <div className={styles.realtorText}>
-                    <b>{contactPerson.name}</b>
-                    <span>{`${contactPerson.role ?? ''}${contactPerson.role ? ' · ' : ''}shared this with you`}</span>
+                    <b>{`${agentDetails?.first_name ?? ''} ${agentDetails?.last_name ?? ''}`.trim()}</b>
+                    <span>{`Realtor · shared this with you`}</span>
                   </div>
-                  <a className={styles.call} href={`tel:${contactPerson?.phone}`} aria-label={`Call ${contactPerson.name.split(' ')[0]}`}>
+                  <a className={styles.call} href={agentDetails?.phone ? `tel:${agentDetails?.phone}` : `mailto:${agentDetails?.email}`} aria-label={`${agentDetails?.phone ? 'Call'  :'Send an email to'} ${agentDetails?.first_name}`}>
                     <Phone size={18} />
                   </a>
                 </div>
               </ListItem>
-            ))}
           </List>
         )}
 
@@ -149,7 +167,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
               <span className={styles.amenityLabel}>{a.name}</span>
               <span className={styles.amenityIcon}>
                 <img
-                  src={a.icon.src}
+                  src={getAmenityIcon(a.name)}
                   width={20}
                   height={20}
                   alt=""
@@ -181,7 +199,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
         )}
 
         <h2 className={`label ${styles.sectionLabel}`}>Paperwork</h2>
-        <Link className={styles.paperwork} href={routes.papers(detail?.id?.toString())}>
+        <Link className={styles.paperwork} href={routes.papers(detail?.id?.toString())} onClick={startNavigation}>
           <span className={styles.paperworkCount}>{String(paperwork?.documents?.length).padStart(2, '0')}</span>
           <span className={styles.paperworkText}>
             <b>Documents to read</b>
@@ -199,6 +217,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
                   <ListItem key={unit.id}>
                     <Link
                       className={styles.unit}
+                      onClick={startNavigation}
                       href={routes.plot(detail?.id?.toString(), unit.id?.toString())}
                       aria-label={`${unit.unit_size}${!/[a-z]/i.test(unit.unit_size) ? ' sqm' : ''} ${unit?.unit_title.toLowerCase()}, ${currencyShort(Number(unit?.price), unit?.project?.currency)} outright${unit?.payment_plan_available ? ', payment plan available' : ''}`}
                     >

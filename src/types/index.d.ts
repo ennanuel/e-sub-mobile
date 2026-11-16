@@ -369,6 +369,9 @@ export type BaseUser = {
   last_name: string;
   middle_name: string | null;
   avatar: string | null;
+  phone?: string;
+  email?: string;
+  role?: string;
 };
 
 export type UserDocumentVariant = 'national_id' | 'passport' | 'driver_license' | 'utility_bill' | 'id_document';

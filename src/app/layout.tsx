@@ -10,6 +10,7 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/700.css';
 import './globals.css';
+import { ProjectDetails } from '@/types';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await props.params;
   const projectInfo = await loadDevelopment(slug);
-  const project = projectInfo?.project ?? {};
+  const project = (projectInfo?.project ?? {}) as ProjectDetails;
 
   const title = `${project?.name ?? ''}${project?.name && project?.address ? ', ' : ''}${project?.address}`;
   const description = project?.description;

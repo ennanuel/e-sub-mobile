@@ -1,6 +1,10 @@
 /** Every URL in the app, in one place. */
 export const routes = {
-  home: (slug: string) => `/developments/${slug}`,
+  home: (slug: string, queryParams?: Record<string, string>) => {
+    const searchParams = new URLSearchParams(queryParams);
+    const searchParamsStr = queryParams ? `?${searchParams?.toString()}` : '';
+    return  `/developments/${slug}${searchParamsStr}`
+  },
   listing: (slug: string) => `/developments/${slug}?view=listing`,
   faq: (slug: string) => `/developments/${slug}/faq`,
   papers: (slug: string) => `/developments/${slug}/papers`,

@@ -98,6 +98,7 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
   const { isLoading: isLoadingEquity, data: equity = null } = useQuery({
     queryKey: ['equity_details', state.equityId, user?.id],
     queryFn: () => getEquityDetails(state.equityId?.toString() ?? '', user?.id?.toString() ?? ''),
+    enabled: !!state?.equityId?.toString() && !!user?.id?.toString(),
   });
 
   const { mutate, isPending } = useMutation({

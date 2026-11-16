@@ -30,7 +30,7 @@ export const getESubDomain = () =>
   isUsingDynamicStoreName() && typeof window !== 'undefined' ? window.location.origin : LOCAL_ESUB_DOMAIN;
 
 export const getStoreName = () => {
-  const eSubDomain = getStoreInfo()?.store_name ?? getESubDomain();
+  const eSubDomain = getStoreInfo()?.store_name ?? process.env.NEXT_PUBLIC_TEST_STORE_NAME ?? getESubDomain();
   return eSubDomain.split('.')[0];
 };
 

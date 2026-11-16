@@ -137,7 +137,10 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   return (
     <Screen
       label="Your details"
-      back={tab > 0 ? () => setTab(tab - 1) : () => router.back()}
+      back={tab > 0 ? () => {
+        setTab(tab - 1)
+        return {isRerouting: false}
+       } : () => router.back()}
       footer={
         <>
           {error && <p className={text.footerError}>{error}</p>}

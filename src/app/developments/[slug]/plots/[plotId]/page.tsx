@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PlotScreen } from '@/features/buy/PlotScreen';
 import { getUnitDetails, loadDevelopment } from '@/lib/load';
+import { ProjectDetails } from '@/types';
 
 interface Props {
   params: Promise<{ slug: string; plotId: string }>;
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PlotPage({ params }: Props) {
   const { slug, plotId } = await params;
   const [unit, projectInfo] = await Promise.all([getUnitDetails(slug, plotId), loadDevelopment(slug)]);
-  const project = projectInfo?.project ?? {};
+  const project = (projectInfo?.project ?? {} as ProjectDetails)
 
   if (!unit) notFound();
   return <PlotScreen listing={project} unit={unit} />;

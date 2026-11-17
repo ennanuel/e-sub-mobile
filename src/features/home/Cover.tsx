@@ -37,7 +37,7 @@ export const Cover = forwardRef<HTMLDivElement, CoverProps>(function Cover(
         <div className={styles.fade} aria-hidden="true" />
         <div className={styles.top}>
           <CityViewLogo width={108} />
-          <span className={styles.badge}>{companyName ?? 'NEW DEVELOPMENT'}</span>
+          <span className={styles.badge}>{'NEW DEVELOPMENT'}</span>
         </div>
         <h1 className={styles.title}>
           <span>{place}</span>

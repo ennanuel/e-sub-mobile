@@ -22,7 +22,7 @@ import { DEFAULT_NOK_DATA, DEFAULT_USER_DATA } from '@/constants/fields';
 import { getCountryDetailsByName } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useBuyEmail } from './BuyEmailContext';
-import { Box } from '@chakra-ui/react';
+import { Box, Center, Spinner } from '@chakra-ui/react';
 
 const TABS: readonly string[] = ['Basic info', 'More info', 'Next of kin'];
 const NEXT_LABEL: readonly string[] = ['Next: More info', 'Next: Next of kin', 'Continue'];
@@ -129,6 +129,8 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   useEffect(() => {
     if (!purchase?.unitId) {
       router.push(routes.listing(slug))
+    } else if (!purchase.termsVersion) {
+      router.push(routes.buy.terms(slug))
     } else if (!user && !isLoadingUserDetails && !email) router.replace(routes.buy.email(slug));
   }, [isLoadingUserDetails, user, email, purchase]);
   
@@ -215,6 +217,11 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     formik.handleSubmit();
     setError('');
   };
+
+  
+  if (!purchase?.unitId || !purchase.termsVersion || (!user && !isLoadingUserDetails && !email)) {
+    return <Center width="100%" height="100dvh"><Spinner size="xl" /></Center>
+  }
 
   return (
     <Screen

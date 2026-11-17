@@ -14,6 +14,7 @@ import type { ProjectDetails } from '@/types';
 import { useSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
 import { usePurchase } from '@/lib/purchase';
+import { Center, Spinner } from '@chakra-ui/react';
 
 /** Buying, step 1: the email (skipped when it was confirmed earlier in this visit). */
 export function EmailScreen({ listing }: { listing: ProjectDetails }) {
@@ -50,7 +51,10 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
   };
 
   useEffect(() => {
-    if (!purchase?.unitId) router.push(routes.listing(slug))
+    if (!purchase?.unitId) router.push(routes.listing(slug));
+    else if (!purchase.termsVersion) {
+     router.push(routes.buy.terms(slug))
+    }
   }, [purchase])
 
   useEffect(() => {
@@ -58,6 +62,14 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
       setIsRouting(false)
     }
   }, [])
+  
+  if (!purchase?.unitId || !purchase.termsVersion) {
+    return (
+      <Center width='100%' height='100dvh'>
+        <Spinner size='xl' />
+      </Center>
+    )
+  }
 
   return (
     <Screen

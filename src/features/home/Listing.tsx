@@ -12,7 +12,7 @@ import { currencyShort } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { SkyLook } from '@/lib/sky';
 import { FaqSection } from '../faq/FaqSection';
-import { PhotoViewer } from './PhotoViewer';
+import { PhotoViewerModal, PhotoViewerModalRef } from './PhotoViewer';
 import styles from './Listing.module.css';
 import { BaseUser, ProjectDetails } from '@/types';
 import { Avatar, Box, List, ListItem, SkeletonText, Spinner, Stack, StackDivider } from '@chakra-ui/react';
@@ -33,17 +33,20 @@ interface ListingProps {
 }
 
 /** Page 2: the development. The white sheet scrolls up over the road scene. */
-export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing({ detail, isLoadingAgentDetails, agentDetails, faq, sky, morphing, onBack, sheetRef }, ref) {
+export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing(
+  { detail, isLoadingAgentDetails, agentDetails, faq, sky, morphing, onBack, sheetRef },
+  ref,
+) {
   const unitsContainerRef = useRef<HTMLDivElement>(null);
+  const photoViewerRef = useRef<PhotoViewerModalRef>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const [photo, setPhoto] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { share, toast } = useShareLink();
 
   const startNavigation = () => {
     setIsNavigating(true);
-  }
+  };
 
   const { isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, data } = useInfiniteQuery({
     initialPageParam: 1,
@@ -88,9 +91,11 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
   const photos = detail?.photo_urls?.map((photo) => ({ photo })) ?? [];
   const extraPhotos = (photos?.length ?? 0) - 3;
 
-  useEffect(() => {return () => {
-    setIsNavigating(false)
-  }}, [])
+  useEffect(() => {
+    return () => {
+      setIsNavigating(false);
+    };
+  }, []);
 
   return (
     <div ref={ref} className={`${styles.listing} ${morphing ? styles.morphing : ''}`} aria-hidden={morphing || undefined}>
@@ -110,12 +115,16 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
         <RoadScene sky={sky} variant="listing" />
       </div>
 
-      <div ref={sheetRef} className={styles.sheet} style={{overflow: 'hidden'}}>
-        {isNavigating && <Box position="absolute" top="0" left="0" width="100%" height="100%" zIndex={9999} bg='rgba(255, 255, 255, 0.3)' />}
+      <div ref={sheetRef} className={styles.sheet} style={{ overflow: 'hidden' }}>
+        {isNavigating && (
+          <Box position="absolute" top="0" left="0" width="100%" height="100%" zIndex={9999} bg="rgba(255, 255, 255, 0.3)" />
+        )}
         <span className={styles.grab} />
         <div className={`label ${styles.muted}`}>
-          {'NEW DEVELOPMENT'
-          /*detail?.constructed_by*/}
+          {
+            'NEW DEVELOPMENT'
+            /*detail?.constructed_by*/
+          }
           {detail?.constructed_by && detail?.address ? ' · ' : ''}
           {detail.address}
         </div>
@@ -123,25 +132,39 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
           <BrandName name={detail.name} />
         </h1>
 
-        {detail?.starting_from && <div className={styles.price}>
-          <div className={`label ${styles.muted}`}>Starting from</div>
-          <div className={styles.priceValue}>{currencyShort(detail?.starting_from, detail?.starting_from_currency ?? detail?.currency)}</div>
-        </div>}
+        {detail?.starting_from && (
+          <div className={styles.price}>
+            <div className={`label ${styles.muted}`}>Starting from</div>
+            <div className={styles.priceValue}>
+              {currencyShort(detail?.starting_from, detail?.starting_from_currency ?? detail?.currency)}
+            </div>
+          </div>
+        )}
 
         {Boolean(!isLoadingAgentDetails && agentDetails) && (
           <List width="100%">
-              <ListItem width="100%">
-                <div className={styles.realtor}>
-                  <Avatar src={agentDetails?.avatar} name={agentDetails?.first_name ?? agentDetails?.last_name} size="sm" boxSize="44px" minWidth='44px' />
-                  <div className={styles.realtorText}>
-                    <b>{`${agentDetails?.first_name ?? ''} ${agentDetails?.last_name ?? ''}`.trim()}</b>
-                    <span>{`Realtor · shared this with you`}</span>
-                  </div>
-                  <a className={styles.call} href={agentDetails?.phone ? `tel:${agentDetails?.phone}` : `mailto:${agentDetails?.email}`} aria-label={`${agentDetails?.phone ? 'Call'  :'Send an email to'} ${agentDetails?.first_name}`}>
-                    <Phone size={18} />
-                  </a>
+            <ListItem width="100%">
+              <div className={styles.realtor}>
+                <Avatar
+                  src={agentDetails?.avatar}
+                  name={agentDetails?.first_name ?? agentDetails?.last_name}
+                  size="sm"
+                  boxSize="44px"
+                  minWidth="44px"
+                />
+                <div className={styles.realtorText}>
+                  <b>{`${agentDetails?.first_name ?? ''} ${agentDetails?.last_name ?? ''}`.trim()}</b>
+                  <span>{`Realtor · shared this with you`}</span>
                 </div>
-              </ListItem>
+                <a
+                  className={styles.call}
+                  href={agentDetails?.phone ? `tel:${agentDetails?.phone}` : `mailto:${agentDetails?.email}`}
+                  aria-label={`${agentDetails?.phone ? 'Call' : 'Send an email to'} ${agentDetails?.first_name}`}
+                >
+                  <Phone size={18} />
+                </a>
+              </div>
+            </ListItem>
           </List>
         )}
 
@@ -175,7 +198,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
                   key={i}
                   type="button"
                   className={styles.photo}
-                  onClick={() => setPhoto(i)}
+                  onClick={() => photoViewerRef.current?.open(i)}
                   aria-label={`Open photo ${i + 1} of ${photos?.length ?? 0}: ${detail?.name}`}
                 >
                   <img src={p.photo} alt="" />
@@ -200,48 +223,52 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
           <Box width="100%" ref={unitsContainerRef}>
             <h2 className={`label ${styles.sectionLabel}`}>Available units</h2>
             <Stack gap="24px">
-              {
-                isLoading ? <Stack width='100%' mt="24px" spacing='24px' divider={<StackDivider width='100%' height='1px' border='none' bg='#E4E4E7' />}>
-                  {
-                    [1, 2, 3].map((item) => (
-                      <Box width="100%" key={item}>
-                        <SkeletonText skeletonHeight='16px' width='100%' maxWidth='200px' startColor='#E4E4E7' endColor='#FAFAF5' />
-                      </Box>
-                    ))
-                  }
-                </Stack>:
-              <List className={styles.units}>
-                {units?.map((unit) => (
-                  <ListItem key={unit.id}>
-                    <Link
-                      className={styles.unit}
-                      onClick={startNavigation}
-                      href={routes.plot(detail?.id?.toString(), unit.id?.toString())}
-                      aria-label={`${unit.unit_size}${!/[a-z]/i.test(unit.unit_size) ? ' sqm' : ''} ${unit?.unit_title.toLowerCase()}, ${currencyShort(Number(unit?.price), unit?.project?.currency)} outright${unit?.payment_plan_available ? ', payment plan available' : ''}`}
-                    >
-                      <span>
-                        <span className={styles.unitSize}>
-                          <b>{`${unit.unit_size?.replace(/[^0-9]/gi, '') || 'N/A'}`}</b>
-                          <span>sqm</span>
+              {isLoading ? (
+                <Stack
+                  width="100%"
+                  mt="24px"
+                  spacing="24px"
+                  divider={<StackDivider width="100%" height="1px" border="none" bg="#E4E4E7" />}
+                >
+                  {[1, 2, 3].map((item) => (
+                    <Box width="100%" key={item}>
+                      <SkeletonText skeletonHeight="16px" width="100%" maxWidth="200px" startColor="#E4E4E7" endColor="#FAFAF5" />
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <List className={styles.units}>
+                  {units?.map((unit) => (
+                    <ListItem key={unit.id}>
+                      <Link
+                        className={styles.unit}
+                        onClick={startNavigation}
+                        href={routes.plot(detail?.id?.toString(), unit.id?.toString())}
+                        aria-label={`${unit.unit_size}${!/[a-z]/i.test(unit.unit_size) ? ' sqm' : ''} ${unit?.unit_title.toLowerCase()}, ${currencyShort(Number(unit?.price), unit?.project?.currency)} outright${unit?.payment_plan_available ? ', payment plan available' : ''}`}
+                      >
+                        <span>
+                          <span className={styles.unitSize}>
+                            <b>{`${unit.unit_size?.replace(/[^0-9]/gi, '') || 'N/A'}`}</b>
+                            <span>sqm</span>
+                          </span>
+                          <span
+                            className={unit?.unit_title ? styles.unitUseCommercial : styles.unitUse}
+                            style={{ textTransform: 'capitalize' }}
+                          >
+                            {unit?.unit_title}
+                          </span>
                         </span>
-                        <span
-                          className={unit?.unit_title ? styles.unitUseCommercial : styles.unitUse}
-                          style={{ textTransform: 'capitalize' }}
-                        >
-                          {unit?.unit_title}
+                        <span className={styles.unitRight}>
+                          <span className={styles.unitPrice}>
+                            {currencyShort(Number(unit.price), unit?.project?.currency)} <span>outright</span>
+                          </span>
+                          {unit?.payment_plan_available && <span className={styles.unitPlan}>Payment plan available</span>}
                         </span>
-                      </span>
-                      <span className={styles.unitRight}>
-                        <span className={styles.unitPrice}>
-                          {currencyShort(Number(unit.price), unit?.project?.currency)} <span>outright</span>
-                        </span>
-                        {unit?.payment_plan_available && <span className={styles.unitPlan}>Payment plan available</span>}
-                      </span>
-                    </Link>
-                  </ListItem>
-                ))}
-              </List>
-              }
+                      </Link>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
               {isFetchingNextPage && <Spinner />}
             </Stack>
           </Box>
@@ -251,16 +278,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
       </div>
 
       {toast}
-      {photo !== null && (
-        <PhotoViewer
-          photos={photos}
-          listingName={detail?.name}
-          listingLocation={detail?.address}
-          index={photo}
-          onIndex={setPhoto}
-          onClose={() => setPhoto(null)}
-        />
-      )}
+      <PhotoViewerModal ref={photoViewerRef} photos={photos} listingName={detail?.name} listingLocation={detail?.address} />
     </div>
   );
 });

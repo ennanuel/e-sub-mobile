@@ -116,10 +116,10 @@ export const updateUserDetails = async (
     const storeName = getStoreName();
   await Promise.all(body.map((payload) => {
     const [_, payloadValues] = Object.entries(payload)[0]
-    const body = Object.fromEntries(Object.entries(payloadValues).map(([key, value]) => [
+    const body = Object.fromEntries(Object.entries(payloadValues).filter((entry) => typeof entry[1] === 'string' || Array.isArray(entry[1]) ? !!entry[1]?.length : !!entry).map(([key, value]) => [
       key === 'documents' ? 'document' : key, 
-      formatBackendPayload(value, key)].filter((entry) => typeof entry[1] === 'string' ? !!entry[1]?.length : !!entry)
-    ));
+      formatBackendPayload(value, key)
+    ]));
     return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, body)
   }));
   return;

@@ -9,13 +9,14 @@ import { shrinkImage } from '@/lib/image';
 import styles from './Details.module.css';
 import { UserDocument, UserDocumentVariant } from '@/types';
 import { Center } from '@chakra-ui/react';
-import { uploadFiles } from '@/api/store';
 import { PiFolderOpen } from 'react-icons/pi';
 
 type Side = 'front' | 'back';
 
 interface IdUploadProps {
   handleIsUploading: (isUploading: boolean) => void;
+  selectIdType: (idType: UserDocumentVariant) => void;
+  idType: UserDocumentVariant;
   documents: UserDocument[];
   onChange: (documents: UserDocument[]) => void;
   invalid?: boolean;
@@ -28,8 +29,6 @@ const DOC_TYPES: readonly { label: string; value: UserDocumentVariant }[] = [
   { label: "Driver's license", value: 'driver_license' },
   { label: "Voter's card", value: 'id_document' },
 ];
-
-const formatBase64 = (base64: string) => base64?.replace('data:', '')?.replace(/^.+,/, '');
 
 const getBase64File = (file: File): Promise<string> => new Promise((resolve, reject) => {
   const fileReader = new FileReader();
@@ -47,17 +46,11 @@ const isFileImage = (file: File) => file.type.includes('image');
 const isFileUrlImage = (fileString: string) => IMAGE_FILE_EXTENSIONS_RGX.test(fileString);
 const isBase64FileImage = (fileString: string) => fileString?.startsWith('data:image/');
 
-export function IdUpload({ documents, onChange, invalid, handleIsUploading, shakeKey }: IdUploadProps) {
+export function IdUpload({ documents, onChange, idType, selectIdType, invalid, handleIsUploading, shakeKey }: IdUploadProps) {
   const input = useRef<HTMLInputElement>(null);
   const side = useRef<Side>('front');
   const [uploading, setUploading] = useState<Side | null>(null);
   const [error, setError] = useState('');
-  const [selectedIdType, setSelectedIdType] = useState<UserDocumentVariant>('national_id');
-
-  const selectIdType = (idType: UserDocumentVariant) => {
-    setSelectedIdType(idType);
-    onChange(documents.map((doc) => ({ ...doc, document_type: idType })));
-  };
 
   const [front, back] = useMemo(() => documents ?? [], [documents]);
 
@@ -81,17 +74,14 @@ export function IdUpload({ documents, onChange, invalid, handleIsUploading, shak
     setError('');
     try {
       const small = isFileImage(file) ? await shrinkImage(file, { maxSide: 900, quality: 0.8 }) : file;
-      const uploadedFileRes = await uploadFiles([small]);
-      const preview = await getBase64File(file);
-      const uploadedFile = uploadedFileRes[0];
+      const preview = await getBase64File(small);
       const documentIndex = s == 'back' ? 1 : 0;
       const documentsUpdate = [...documents];
       
       documentsUpdate[documentIndex] = {
-        document: formatBase64(preview),
-        image: uploadedFile[0],
+        document: preview,
         document_name: file.name,
-        document_type: selectedIdType,
+        document_type: idType,
         created_at: new Date().toISOString(),
       };
 
@@ -145,21 +135,11 @@ export function IdUpload({ documents, onChange, invalid, handleIsUploading, shak
         )}
       </div>
 
-      {/* {!front && (
-        <div className={styles.idChips} aria-label="Accepted IDs">
-          {
-            DOC_TYPES.map(({ label, value }) => (
-              <span key={label} style={{cursor: 'pointer'}} onClick={() => {}}>{label}</span>
-            ))
-          }
-        </div>
-      )} */}
-
       <PillGroup
         label="ID Type"
         options={DOC_TYPES}
-        value={selectedIdType}
-        onChange={(value) => selectIdType(value as UserDocumentVariant)}
+        value={idType}
+        onChange={(value) => typeof value === 'object' && selectIdType((value)?.value as UserDocumentVariant)}
       />
 
       {front && (

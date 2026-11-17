@@ -119,14 +119,13 @@ export function capitalise(s: string): string {
  */
 export function formatLocalPhone(input: string): string {
   let d = input.replace(/\D/g, '');
-  if (d.startsWith('234') && d.length > 10) d = d.slice(3);
   d = d.replace(/^0+/, '').slice(0, 10);
   return d.replace(/^(\d{3})(\d{0,3})(\d{0,4}).*/, (_, a: string, b: string, c: string) => [a, b, c].filter(Boolean).join(' '));
 }
 
 /** "803 412 7790" -> "+2348034127790" */
 export function toE164(local: string): string {
-  return `+234${local.replace(/\D/g, '')}`;
+  return local.replace(/\D/g, '')
 }
 
 export function formatUnitSize(unit: ProjectBundle | null) {

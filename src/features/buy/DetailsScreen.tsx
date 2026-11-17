@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { PhoneField, PillGroup, TextField } from '@/components/ui/Field';
 import { Screen } from '@/components/ui/Screen';
@@ -13,7 +13,7 @@ import { isEmail, isFilled, isLocalPhone } from '@/lib/validation';
 import { IdUpload } from './IdUpload';
 import { PassportPhoto } from './PassportPhoto';
 import { usePurchaseKicker } from './useBuyGuard';
-import { NextOfKin, User, type NextOfKinUpdateValues, type ProjectDetails, type UserDocument, type UserUpdateValues } from '@/types';
+import { NextOfKin, User, UserDocumentVariant, type NextOfKinUpdateValues, type ProjectDetails, type UserDocument, type UserUpdateValues } from '@/types';
 import countries, { getCountry } from '@/constants/country';
 import { useFormik } from 'formik';
 
@@ -33,6 +33,8 @@ const NATIONALITIES: readonly string[] = ['Nigerian', 'Ghanaian', 'British', 'Am
 const COUNTRIES = countries.map((country) => country.name);
 
 type Key = `user.${keyof UserUpdateValues}` | `nextOfKin.${keyof NextOfKinUpdateValues}`;
+
+const formatBase64 = (base64: string) => base64?.replace('data:', '')?.replace(/^.+,/, '');
 
 /** Which fields are wrong on a tab. */
 function problems(tab: number, d: DetailsDraft, storeData: {user: User; nextOfKin: NextOfKin} | null): Key[] {
@@ -55,7 +57,7 @@ function problems(tab: number, d: DetailsDraft, storeData: {user: User; nextOfKi
   return bad;
 }
 
-const USER_FIELDS_TO_POPULATE = ['avatar', 'phone', 'alternate_phone', 'nationality', 'country', 'marital_status', 'adddress', 'occupation', 'company_name', 'company_address', 'documents'];
+const USER_FIELDS_TO_POPULATE = ['avatar', 'phone', 'alternate_phone', 'nationality', 'country', 'marital_status', 'address', 'occupation', 'company_name', 'company_address', 'documents'];
 const NEXT_OF_KIN_FIELDS_TO_POPULATE = ['first_name', 'last_name', 'relationship', 'phone', 'alternate_phone', 'email', 'phone'];
 
 export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
@@ -63,11 +65,19 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const kicker = usePurchaseKicker(listing);
   const [isRouting, setIsRouting] = useState(false);
 
+  const isChangingDocument = useRef(false);
+
   const router = useRouter();
   const purchase = usePurchase();
   const {email} = useBuyEmail();
 
   const { user, nextOfKin, isLoadingUserDetails, requestOtp, isSigningUp, isRequestingOtp, signUp } = useSession();
+
+  const [idType, setIdType] = useState<UserDocumentVariant>('national_id');
+
+  const selectIdType = (idType: UserDocumentVariant) => {
+    formik.setFieldValue('user.documents', formik.values.user.documents?.map(doc => ({...doc, document_type: idType})))
+  }
 
   const formik = useFormik<{ user: UserUpdateValues; nextOfKin: NextOfKinUpdateValues }>({
     initialValues: { user: { ...DEFAULT_USER_DATA }, nextOfKin: { ...DEFAULT_NOK_DATA } },
@@ -102,7 +112,7 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const countryCode = useMemo(() => {
     const storedCountry = getCountry();
     const country = getCountryDetailsByName(formik.values.user.country || storedCountry.name);
-    return `+${country?.dialCode ?? '234'}`;
+    return country?.dialCode ?? '234'
   }, [formik.values.user.country]);
 
   const setFieldValue = (key: Key) => (value: string | UserDocument[]) => {
@@ -129,12 +139,23 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   }, [])
 
   useEffect(() => {
-    saveDraft(formik.values);
-  }, [formik.values, saveDraft]);
+    const documents = isChangingDocument.current && formik.values?.user?.documents?.length ? formik.values.user.documents?.map(doc => ({...doc, document: formatBase64(doc.document)})) : []
+    const valuesToSave = {
+      user: {
+        ...formik.values.user,
+        documents
+      },
+      nextOfKin: {
+        ...formik.values.nextOfKin,
+        phone: `${countryCode}${formik.values.nextOfKin.phone}`,
+        alternate_phone: `${countryCode}${formik.values.nextOfKin.alternate_phone}`
+      }
+    }
+    saveDraft(valuesToSave);
+  }, [formik.values, countryCode, saveDraft]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [tab]);
-  // After a failed try, put the cursor in the first field that needs fixing.
   useEffect(() => {
     if (tries) document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus({ preventScroll: false });
   }, [tries]);
@@ -142,6 +163,10 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   useEffect(() => {
     const userToUpdate: Partial<UserUpdateValues> = {};
     const nextOfKinUpdate: Partial<NextOfKinUpdateValues> = {};
+    
+    const storedCountry = getCountry();
+    const country = getCountryDetailsByName(storedCountry.name);
+    const defaultCountryCode = country?.dialCode ?? '234';
 
     if (user) {
       for (const [key, value] of Object.entries(user)) {
@@ -151,15 +176,21 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
       }
     }
     if (nextOfKin) {
-      for (const [key, value] of Object.entries(nextOfKin)) {
-        if (NEXT_OF_KIN_FIELDS_TO_POPULATE.includes(key) && value) {
-          nextOfKinUpdate[key] = value
+      for (const [key, initialValue] of Object.entries(nextOfKin)) {
+        if (NEXT_OF_KIN_FIELDS_TO_POPULATE.includes(key) && initialValue) {
+          const value = key.includes('phone') ? initialValue?.toString()?.replace(new RegExp(`^${defaultCountryCode}`, 'ig'), '') : initialValue;
+          nextOfKinUpdate[key] = value;
         }
       }
     }
 
     formik.setValues((prev) => ({user: {...prev.user, ...userToUpdate}, nextOfKin: {...prev.nextOfKin, ...nextOfKinUpdate}}));
   }, [user, nextOfKin]);
+
+  useEffect(() => {
+    const documentType = formik?.values?.user?.documents?.find(doc => doc?.document_type)?.document_type ?? 'national_id';
+    if (documentType !== idType) setIdType(documentType)
+  }, [formik?.values?.user?.documents, idType])
 
   const invalid = (key: Key) => bad.includes(key);
 
@@ -337,7 +368,17 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             value={formik.values.user.company_address}
             onChange={setFieldValue('user.company_address')}
           />
-          <IdUpload handleIsUploading={setIsUploadingDocs} documents={formik.values.user.documents} onChange={setFieldValue('user.documents')} shakeKey={tries} />
+          <IdUpload 
+            idType={idType}
+            selectIdType={selectIdType} 
+            handleIsUploading={setIsUploadingDocs} 
+            documents={formik.values.user.documents} 
+            onChange={(docs) => {
+              isChangingDocument.current = true;
+              setFieldValue('user.documents')(docs)
+            }} 
+            shakeKey={tries} 
+          />
         </div>
       )}
 

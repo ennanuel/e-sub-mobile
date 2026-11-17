@@ -83,9 +83,10 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     initialValues: { user: { ...DEFAULT_USER_DATA }, nextOfKin: { ...DEFAULT_NOK_DATA } },
     onSubmit: () => {
       if (user){
-        purchase.createSubscription().then(() => {
+        purchase.createSubscription().then((res) => {
+          const equityId = res?.equityId
           setIsRouting(true);
-          router.push(routes.buy.offer(slug))
+          router.push(routes.buy.offer(slug, equityId))
         }).catch((err) => {
           setError((err as Error)?.message)
         })

@@ -13,16 +13,17 @@ import { useSession } from '@/lib/session';
 import { dateOrTimeAgo } from '@/lib/date';
 import { ProjectDetails } from '@/types';
 import { useEffect, useState } from 'react';
+import { Center, Spinner } from '@chakra-ui/react';
 
 /** Buying, step 4: the offer LCR emailed, then "Proceed to payment". */
-export function OfferScreen({ listing }: { listing: ProjectDetails }) {
+export function OfferScreen({ listing, equityId: initialEquityId }: { listing: ProjectDetails; equityId: string }) {
   const slug = listing?.id?.toString();
   const ready = useBuyGuard(slug, { terms: true, session: true, offer: true });
   const router = useRouter();
   const [isRouting, setIsRouting] = useState(false);
 
   const { user } = useSession();
-  const { equityId, equity } = usePurchase();
+  const { isLoadingEquity, equityId, setEquityId, equity } = usePurchase();
 
   const first = capitalise(user?.first_name ?? '');
 
@@ -57,12 +58,20 @@ export function OfferScreen({ listing }: { listing: ProjectDetails }) {
   const paymentPlanBalance = purchasePrice - initialDeposit;
 
   useEffect(() => {
+    if (!equityId?.toString() && !!initialEquityId?.toString() && !isNaN(Number(initialEquityId))) {
+      setEquityId(Number(initialEquityId))
+    }
+  }, [initialEquityId, equityId])
+
+  useEffect(() => {
     return () => {
       setIsRouting(false);
     }
   }, [])
 
-  if (!ready || !equityId) return null;
+  if (isLoadingEquity || !ready || !equityId) return (<Center width="100%" height="100dvh">
+    <Spinner size="xl" />
+  </Center>)
 
   return (
     <Screen
@@ -71,9 +80,9 @@ export function OfferScreen({ listing }: { listing: ProjectDetails }) {
       entrance="fade"
       footer={
         <div className={styles.footer}>
-          <Button onClick={() => {
+          <Button loading={isRouting} onClick={() => {
             setIsRouting(true);
-            router.push(routes.buy.pay(slug))
+            router.push(routes.buy.pay(slug, equityId?.toString()))
           }}>Proceed to payment</Button>
         </div>
       }
@@ -103,7 +112,7 @@ export function OfferScreen({ listing }: { listing: ProjectDetails }) {
             <span>{isPaymentPlan ? 'Initial deposit' : 'Purchase price'}</span>
             <b className={styles.red}>{currencyShort(amountToPay, currency)}</b>
           </div>
-          {isPaymentPlan || (!isNaN(paymentPlanBalance) && paymentPlanBalance > 0) ? (
+          {((isPaymentPlan && (!isNaN(paymentPlanBalance) && paymentPlanBalance > 0)) || closingCost) ? (
             <div className={styles.row}>
               <span>{isPaymentPlan ? 'Balance' : 'With closing costs'}</span>
               <b>

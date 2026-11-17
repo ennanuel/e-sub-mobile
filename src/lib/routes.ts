@@ -15,8 +15,8 @@ export const routes = {
     email: (slug: string) => `/developments/${slug}/buy/email`,
     verify: (slug: string) => `/developments/${slug}/buy/verify`,
     details: (slug: string) => `/developments/${slug}/buy/details`,
-    offer: (slug: string) => `/developments/${slug}/buy/offer`,
-    pay: (slug: string) => `/developments/${slug}/buy/pay`,
+    offer: (slug: string, equityId: string) => `/developments/${slug}/buy/offer/${equityId}`,
+    pay: (slug: string, equityId: string) => `/developments/${slug}/buy/pay/${equityId}`,
     thankYou: (slug: string) => `/developments/${slug}/buy/thank-you`,
   },
 };

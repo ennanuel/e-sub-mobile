@@ -68,7 +68,7 @@
   line-height: 0.86;
 }
 
-.title span:last {
+.title span:last-child {
   color: var(--blue);
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Copy } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
@@ -21,7 +21,7 @@ import { uploadFiles } from '@/api/store';
 import { Center, Spinner } from '@chakra-ui/react';
 
 /** Buying, step 5: the amount and LCR's accounts. "I've made the transfer" tells LCR to look for it. */
-export function PayScreen({ listing }: { listing: ProjectDetails }) {
+export function PayScreen({ listing, equityId: initialEquityId }: { listing: ProjectDetails, equityId: string }) {
   const [isRouting, setIsRouting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +33,7 @@ export function PayScreen({ listing }: { listing: ProjectDetails }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
-  const { equityId, equity } = usePurchase();
+  const { equityId, setEquityId, isLoadingEquity, equity } = usePurchase();
 
   const amountToPay = Number(equity?.payment_plan?.initial_deposit_in_value ?? equity?.offer_price);
   const currency = equity?.currency ?? null;
@@ -56,7 +56,15 @@ export function PayScreen({ listing }: { listing: ProjectDetails }) {
     submitReceipts(files);
   };
 
-  if (!ready || !equity || !user) return null;
+  useEffect(() => {
+    if (!equityId?.toString() && !!initialEquityId && !isNaN(Number(initialEquityId))) {
+      setEquityId(Number(initialEquityId))
+    }
+  }, [initialEquityId, equityId])
+
+  if (isLoadingEquity || !ready || !equity || !user) return <Center width="100%" height="100dvh">
+    <Spinner size="xl" />
+  </Center>;
 
   const copy = async (n: string) => {
     try {
@@ -87,7 +95,7 @@ export function PayScreen({ listing }: { listing: ProjectDetails }) {
   return (
     <Screen
       label="Pay to start"
-      back={routes.buy.offer(slug)}
+      back={routes.buy.offer(slug, equityId?.toString())}
       title={
         <span className={text.kicker}>
           {listing.name} · {unitSize}

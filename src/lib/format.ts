@@ -134,6 +134,8 @@ export function formatUnitSize(unit: ProjectBundle | null) {
 }
 
 export const getCountryDetailsByName = (countryName: string) => {
+  if (!countryName) return null;
+
   const normalizedSearch = countryName.trim().toLowerCase();
 
   const matchedCountry = defaultCountries.find((countryData) => {

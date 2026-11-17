@@ -45,7 +45,7 @@ interface PurchaseState extends Purchase {
   isSubmitting: boolean;
   isLoadingEquity: boolean;
   equity: Equity | null;
-  createSubscription: () => Promise<void>;
+  createSubscription: () => Promise<{equityId: string}>;
   start: (listingId: number, unitId: number, paymentPlanId: number | null) => void;
   agreeTerms: (version: string) => void;
   saveDraft: (draft: DetailsDraft) => void;
@@ -105,14 +105,14 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
     onSuccess: (res) => {
       const offer = res.data;
       setEquityId(offer?.equity_id);
-      router.push(routes.buy.offer(slug));
+      router.push(routes.buy.offer(slug, offer?.equity_id?.toString()));
     },
   });
 
   const isSubmitting = isPending || isSigningUp || isUpdatingUserDetail;
 
   const createSubscription = () =>
-    new Promise<void>((resolve, reject) => {
+    new Promise<{equityId: string}>((resolve, reject) => {
       const details = state.draft;
 
       const prepareValue = ([key, value]: [key: string, value: string | UserDocument[] | null]): [
@@ -152,8 +152,9 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
         {
           onSuccess: () => {
             mutate(objToSubmit, {
-              onSuccess: () => {
-                resolve();
+              onSuccess: (res) => {
+                const equityId = res?.data?.equity_id
+                resolve({equityId});
               },
               onError: (err) => {
                 reject(err);

@@ -9,12 +9,10 @@ import type { Terms } from '@/lib/api/types';
 import { usePurchase } from '@/lib/purchase';
 import { routes } from '@/lib/routes';
 import { useSession } from '@/lib/session';
-import { useBuyGuard } from './useBuyGuard';
 import styles from './TermsScreen.module.css';
 
 /** Every clause of the deal. The slider unlocks only when the buyer has scrolled to the end. */
 export function TermsScreen({ slug, developmentName, terms }: { slug: string; developmentName: string; terms: Terms }) {
-  const ready = useBuyGuard(slug);
   const router = useRouter();
   const purchase = usePurchase();
   const { user } = useSession();
@@ -36,7 +34,8 @@ export function TermsScreen({ slug, developmentName, terms }: { slug: string; de
   }, []);
 
   useEffect(() => {
-    if (!ready || read) return;
+    if (read) return;
+    
     check();
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check);
@@ -44,9 +43,7 @@ export function TermsScreen({ slug, developmentName, terms }: { slug: string; de
       window.removeEventListener('scroll', check);
       window.removeEventListener('resize', check);
     };
-  }, [ready, read, check]);
-
-  if (!ready) return null;
+  }, [read, check]);
 
   const percent = Math.round(progress * 100);
   const label = agreed ? 'Agreed' : read ? 'Slide to agree' : percent < 3 ? 'Read to the end to slide' : `Keep reading · ${percent}%`;

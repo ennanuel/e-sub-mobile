@@ -12,12 +12,14 @@ import styles from './OfferScreen.module.css';
 import { useSession } from '@/lib/session';
 import { dateOrTimeAgo } from '@/lib/date';
 import { ProjectDetails } from '@/types';
+import { useEffect, useState } from 'react';
 
 /** Buying, step 4: the offer LCR emailed, then "Proceed to payment". */
 export function OfferScreen({ listing }: { listing: ProjectDetails }) {
   const slug = listing?.id?.toString();
   const ready = useBuyGuard(slug, { terms: true, session: true, offer: true });
   const router = useRouter();
+  const [isRouting, setIsRouting] = useState(false);
 
   const { user } = useSession();
   const { equityId, equity } = usePurchase();
@@ -54,6 +56,12 @@ export function OfferScreen({ listing }: { listing: ProjectDetails }) {
 
   const paymentPlanBalance = purchasePrice - initialDeposit;
 
+  useEffect(() => {
+    return () => {
+      setIsRouting(false);
+    }
+  }, [])
+
   if (!ready || !equityId) return null;
 
   return (
@@ -63,7 +71,10 @@ export function OfferScreen({ listing }: { listing: ProjectDetails }) {
       entrance="fade"
       footer={
         <div className={styles.footer}>
-          <Button onClick={() => router.push(routes.buy.pay(slug))}>Proceed to payment</Button>
+          <Button onClick={() => {
+            setIsRouting(true);
+            router.push(routes.buy.pay(slug))
+          }}>Proceed to payment</Button>
         </div>
       }
     >

@@ -88,8 +88,8 @@ export function IdUpload({ documents, onChange, invalid, handleIsUploading, shak
       const documentsUpdate = [...documents];
       
       documentsUpdate[documentIndex] = {
-        document: uploadedFile,
-        image: preview,
+        document: formatBase64(preview),
+        image: uploadedFile[0],
         document_name: file.name,
         document_type: selectedIdType,
         created_at: new Date().toISOString(),

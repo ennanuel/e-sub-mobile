@@ -8,9 +8,11 @@ import { routes } from '@/lib/routes';
 import { useBuyGuard } from './useBuyGuard';
 import styles from './ThankYouScreen.module.css';
 import { useSession } from '@/lib/session';
+import { useEffect, useState } from 'react';
 
 /** After "I've made the transfer": LCR confirms the payment and emails the receipt. */
 export function ThankYouScreen({ slug }: { slug: string }) {
+  const [isRouting, setIsRouting] = useState(false);
   const ready = useBuyGuard(slug, { terms: true, session: true, offer: true, transfer: true });
   const router = useRouter();
   const { user } = useSession();
@@ -19,6 +21,12 @@ export function ThankYouScreen({ slug }: { slug: string }) {
   const currency = equity?.currency ?? null;
 
   const offerPrice = Number(equity?.payment_plan?.initial_deposit_in_value ?? equity?.offer_price ?? 0);
+
+  useEffect(() => {
+    return () => {
+      setIsRouting(false)
+    }
+  }, [])
 
   if (!ready || !equity) return null;
 
@@ -44,7 +52,10 @@ export function ThankYouScreen({ slug }: { slug: string }) {
         </div>
       </div>
       <div className={styles.footer}>
-        <Button onClick={() => router.push(routes.home(slug))}>Back to Homepage</Button>
+        <Button loading={isRouting} onClick={() => {
+          setIsRouting(true);
+          router.push(routes.home(slug));
+        }}>Back to Homepage</Button>
       </div>
     </main>
   );

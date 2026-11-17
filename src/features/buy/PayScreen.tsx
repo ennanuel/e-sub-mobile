@@ -22,6 +22,7 @@ import { Center, Spinner } from '@chakra-ui/react';
 
 /** Buying, step 5: the amount and LCR's accounts. "I've made the transfer" tells LCR to look for it. */
 export function PayScreen({ listing }: { listing: ProjectDetails }) {
+  const [isRouting, setIsRouting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const slug = listing.id?.toString();
@@ -74,7 +75,7 @@ export function PayScreen({ listing }: { listing: ProjectDetails }) {
     try {
       const fileUrls = await uploadFiles(files);
       await makeBankPayment(equityId?.toString() ?? '', { equity_id: equityId?.toString() ?? '', receipt_urls: fileUrls });
-
+      setIsRouting(true);
       router.push(routes.buy.thankYou(slug));
     } catch (e) {
       setError(errorMessage(e, 'Could not reach LCR. Check your connection and try again.'));
@@ -95,16 +96,20 @@ export function PayScreen({ listing }: { listing: ProjectDetails }) {
       footer={
         <>
           {error && <p className={text.footerError}>{error}</p>}
-          <Button loading={sending} loadingText="Letting LCR know" onClick={() => inputRef.current?.click()}>
+          <Button loading={sending || isRouting} loadingText="Letting LCR know" onClick={() => {
+            inputRef.current?.click();
+          }}>
             I’ve made the transfer
           </Button>
-          <Button variant="link" onClick={() => router.push(routes.home(slug))}>
+          <Button variant="link" onClick={() => {
+            router.push(routes.home(slug)
+          )}}>
             Go back to home page
           </Button>
         </>
       }
     >
-      <input ref={inputRef} multiple accept="image/* applcation/pdf" style={{ display: 'none' }} onChange={handleFileChange} />
+      <input ref={inputRef} multiple type="file" accept="image/* applcation/pdf" style={{ display: 'none' }} onChange={handleFileChange} />
       <h1 className={text.heading}>Transfer to any of these.</h1>
       <div className={`label ${styles.amountLabel}`}>Amount to be paid</div>
       <div className={styles.amount}>{currencyFull(amountToPay, currency)}</div>

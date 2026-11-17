@@ -5,7 +5,7 @@ import { AxiosError, isAxiosError } from 'axios';
 
 const formatDobToBackend = (dob: string) => {
   const [year, month, day] = dob?.split(/[^0-9]/ig);
-  return `${day}/${month}/${year}`
+  return `${year}-${month}-${day}`;
 }
 
 function formatBackendPayload<K>(value: K, field: string):K {
@@ -111,11 +111,16 @@ export const updateUserDetails = async (
 ) => {
   const body = fields
     .filter((fieldPayload) => Object.values(fieldPayload[1]).some(Boolean))
-    .map(([field, values]) => ({ [field]: values }));
-  const storeName = getStoreName();
+    .map(([field, values]) => ({ [field]: {...values, ...(field === 'profile' ? {profile_details: true, document_update: true}: {next_of_kin: true})} }));
+
+    const storeName = getStoreName();
   await Promise.all(body.map((payload) => {
-    const body = Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, formatBackendPayload(value, key)].filter((entry) => !!entry[1]?.length)));
-    return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, {...body})
+    const [_, payloadValues] = Object.entries(payload)[0]
+    const body = Object.fromEntries(Object.entries(payloadValues).map(([key, value]) => [
+      key === 'documents' ? 'document' : key, 
+      formatBackendPayload(value, key)].filter((entry) => typeof entry[1] === 'string' ? !!entry[1]?.length : !!entry)
+    ));
+    return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, body)
   }));
   return;
 };

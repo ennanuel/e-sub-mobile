@@ -45,7 +45,7 @@ interface PurchaseState extends Purchase {
   isSubmitting: boolean;
   isLoadingEquity: boolean;
   equity: Equity | null;
-  createSubscription: () => Promise<{equityId: string}>;
+  createSubscription: () => Promise<{ equityId: string }>;
   start: (listingId: number, unitId: number, paymentPlanId: number | null) => void;
   agreeTerms: (version: string) => void;
   saveDraft: (draft: DetailsDraft) => void;
@@ -112,7 +112,7 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
   const isSubmitting = isPending || isSigningUp || isUpdatingUserDetail;
 
   const createSubscription = () =>
-    new Promise<{equityId: string}>((resolve, reject) => {
+    new Promise<{ equityId: string }>((resolve, reject) => {
       const details = state.draft;
 
       const prepareValue = ([key, value]: [key: string, value: string | UserDocument[] | null]): [
@@ -153,8 +153,8 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
           onSuccess: () => {
             mutate(objToSubmit, {
               onSuccess: (res) => {
-                const equityId = res?.data?.equity_id
-                resolve({equityId});
+                const equityId = res?.data?.equity_id;
+                resolve({ equityId });
               },
               onError: (err) => {
                 reject(err);
@@ -165,7 +165,7 @@ export function PurchaseProvider({ children, slug }: { children: ReactNode; slug
             reject(err);
           },
         },
-      )
+      );
     });
 
   const value = useMemo(

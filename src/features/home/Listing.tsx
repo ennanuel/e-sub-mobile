@@ -110,11 +110,12 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
         <RoadScene sky={sky} variant="listing" />
       </div>
 
-      <div ref={sheetRef} className={styles.sheet}>
+      <div ref={sheetRef} className={styles.sheet} style={{overflow: 'hidden'}}>
         {isNavigating && <Box position="absolute" top="0" left="0" width="100%" height="100%" zIndex={9999} bg='rgba(255, 255, 255, 0.3)' />}
         <span className={styles.grab} />
         <div className={`label ${styles.muted}`}>
-          {detail?.constructed_by}
+          {'NEW DEVELOPMENT'
+          /*detail?.constructed_by*/}
           {detail?.constructed_by && detail?.address ? ' · ' : ''}
           {detail.address}
         </div>
@@ -200,7 +201,7 @@ export const Listing = forwardRef<HTMLDivElement, ListingProps>(function Listing
             <h2 className={`label ${styles.sectionLabel}`}>Available units</h2>
             <Stack gap="24px">
               {
-                isLoading ? <Stack width='100%' spacing='24px' divider={<StackDivider width='100%' height='1px' border='none' bg='#E4E4E7' />}>
+                isLoading ? <Stack width='100%' mt="24px" spacing='24px' divider={<StackDivider width='100%' height='1px' border='none' bg='#E4E4E7' />}>
                   {
                     [1, 2, 3].map((item) => (
                       <Box width="100%" key={item}>

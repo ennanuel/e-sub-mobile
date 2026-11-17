@@ -17,6 +17,6 @@ export const routes = {
     details: (slug: string) => `/developments/${slug}/buy/details`,
     offer: (slug: string, equityId: string) => `/developments/${slug}/buy/offer/${equityId}`,
     pay: (slug: string, equityId: string) => `/developments/${slug}/buy/pay/${equityId}`,
-    thankYou: (slug: string) => `/developments/${slug}/buy/thank-you`,
+    thankYou: (slug: string, equityId: string) => `/developments/${slug}/buy/thank-you/${equityId}`,
   },
 };

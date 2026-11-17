@@ -5,22 +5,27 @@ import { Button } from '@/components/ui/Button';
 import { capitalise, currencyFull } from '@/lib/format';
 import { usePurchase } from '@/lib/purchase';
 import { routes } from '@/lib/routes';
-import { useBuyGuard } from './useBuyGuard';
 import styles from './ThankYouScreen.module.css';
 import { useSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
+import { Center, Spinner } from '@chakra-ui/react';
 
 /** After "I've made the transfer": LCR confirms the payment and emails the receipt. */
-export function ThankYouScreen({ slug }: { slug: string }) {
+export function ThankYouScreen({ slug, equityId: initialEquityId }: { slug: string; equityId: string }) {
   const [isRouting, setIsRouting] = useState(false);
-  const ready = useBuyGuard(slug, { terms: true, session: true, offer: true, transfer: true });
   const router = useRouter();
   const { user } = useSession();
 
-  const { equity } = usePurchase();
+  const { equity, equityId, isLoadingEquity, setEquityId } = usePurchase();
   const currency = equity?.currency ?? null;
 
   const offerPrice = Number(equity?.payment_plan?.initial_deposit_in_value ?? equity?.offer_price ?? 0);
+
+  useEffect(() => {
+    if (!!initialEquityId && !isNaN(Number(initialEquityId)) && !equityId?.toString()) {
+      setEquityId(Number(initialEquityId))
+    }
+  }, [initialEquityId, equityId])
 
   useEffect(() => {
     return () => {
@@ -28,7 +33,9 @@ export function ThankYouScreen({ slug }: { slug: string }) {
     }
   }, [])
 
-  if (!ready || !equity) return null;
+  if (!equity || isLoadingEquity) return <Center width="100%" height="100dvh">
+    <Spinner size="xl" />
+  </Center>;
 
   return (
     <main className={styles.page} aria-label="Thank you">

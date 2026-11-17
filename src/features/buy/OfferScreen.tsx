@@ -7,7 +7,6 @@ import text from '@/components/ui/text.module.css';
 import { capitalise, dayMonth, currencyShort } from '@/lib/format';
 import { usePurchase } from '@/lib/purchase';
 import { routes } from '@/lib/routes';
-import { useBuyGuard } from './useBuyGuard';
 import styles from './OfferScreen.module.css';
 import { useSession } from '@/lib/session';
 import { dateOrTimeAgo } from '@/lib/date';
@@ -18,7 +17,6 @@ import { Center, Spinner } from '@chakra-ui/react';
 /** Buying, step 4: the offer LCR emailed, then "Proceed to payment". */
 export function OfferScreen({ listing, equityId: initialEquityId }: { listing: ProjectDetails; equityId: string }) {
   const slug = listing?.id?.toString();
-  const ready = useBuyGuard(slug, { terms: true, session: true, offer: true });
   const router = useRouter();
   const [isRouting, setIsRouting] = useState(false);
 
@@ -69,7 +67,7 @@ export function OfferScreen({ listing, equityId: initialEquityId }: { listing: P
     }
   }, [])
 
-  if (isLoadingEquity || !ready || !equityId) return (<Center width="100%" height="100dvh">
+  if (isLoadingEquity || !equityId) return (<Center width="100%" height="100dvh">
     <Spinner size="xl" />
   </Center>)
 

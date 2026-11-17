@@ -19,7 +19,7 @@ import { useFormik } from 'formik';
 
 import styles from './Details.module.css';
 import { DEFAULT_NOK_DATA, DEFAULT_USER_DATA } from '@/constants/fields';
-import { getCountryDetailsByName } from '@/lib/format';
+import { formatLocalPhone, getCountryDetailsByName } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useBuyEmail } from './BuyEmailContext';
 import { Box, Center, Spinner } from '@chakra-ui/react';
@@ -71,7 +71,7 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const purchase = usePurchase();
   const {email} = useBuyEmail();
 
-  const { user, nextOfKin, isLoadingUserDetails, requestOtp, isSigningUp, isRequestingOtp, signUp } = useSession();
+  const { user, nextOfKin, isLoadingUserDetails, isSigningUp, isRequestingOtp, signUp } = useSession();
 
   const [idType, setIdType] = useState<UserDocumentVariant>('national_id');
 
@@ -92,15 +92,11 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
         })
       } else {
         signUp({user: {...formik.values.user, email}, nextOfKin: formik.values.nextOfKin, onError: (msg) => {
-          setError(msg)
-        }, onSuccess: () => {
-          requestOtp({email}, {onSuccess: () => {
+            setError(msg)
+          }, onSuccess: () => {
             router.push(routes.buy.verify(slug));
-            setIsRouting(true);
-          }, onError: (errorMessage) => {
-            setError(errorMessage.message)
-          }})
-        }})
+          },
+        })
       }
     },
   });
@@ -172,8 +168,11 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     const defaultCountryCode = country?.dialCode ?? '234';
 
     if (user) {
-      for (const [key, value] of Object.entries(user)) {
-        if (USER_FIELDS_TO_POPULATE.includes(key) && value) {
+      for (const [key, initialValue] of Object.entries(user)) {
+        if (USER_FIELDS_TO_POPULATE.includes(key) && initialValue) {
+          const value = key.includes('phone') && initialValue ?
+            formatLocalPhone(initialValue?.toString()?.replace(new RegExp(`^\\+{0,1}${defaultCountryCode}`, 'ig'), '')) : 
+            initialValue;
           userToUpdate[key] = value;
         }
       }
@@ -181,7 +180,9 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     if (nextOfKin) {
       for (const [key, initialValue] of Object.entries(nextOfKin)) {
         if (NEXT_OF_KIN_FIELDS_TO_POPULATE.includes(key) && initialValue) {
-          const value = key.includes('phone') ? initialValue?.toString()?.replace(new RegExp(`^${defaultCountryCode}`, 'ig'), '') : initialValue;
+          const value = key.includes('phone') && initialValue ? 
+            formatLocalPhone(initialValue?.toString()?.replace(new RegExp(`^\\+{0,1}${defaultCountryCode}`, 'ig'), '')) : 
+            initialValue;
           nextOfKinUpdate[key] = value;
         }
       }

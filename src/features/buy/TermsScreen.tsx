@@ -10,6 +10,7 @@ import { usePurchase } from '@/lib/purchase';
 import { routes } from '@/lib/routes';
 import { useSession } from '@/lib/session';
 import styles from './TermsScreen.module.css';
+import { Center, Spinner } from '@chakra-ui/react';
 
 /** Every clause of the deal. The slider unlocks only when the buyer has scrolled to the end. */
 export function TermsScreen({ slug, developmentName, terms }: { slug: string; developmentName: string; terms: Terms }) {
@@ -23,6 +24,8 @@ export function TermsScreen({ slug, developmentName, terms }: { slug: string; de
   const [agreed, setAgreed] = useState(false);
   const [nudge, setNudge] = useState(0);
   const clauseCount = terms.sections.reduce((n, s) => n + s.clauses.length, 0);
+  
+  const [isRouting, setIsRouting] = useState(false);
 
   const check = useCallback(() => {
     const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -45,6 +48,16 @@ export function TermsScreen({ slug, developmentName, terms }: { slug: string; de
     };
   }, [read, check]);
 
+  useEffect(() => {
+    if (!purchase.unitId) router.push(routes.listing(slug));
+  }, [purchase]);
+
+  useEffect(() => {
+    return () => {
+      setIsRouting(false);
+    }
+  }, [])
+
   const percent = Math.round(progress * 100);
   const label = agreed ? 'Agreed' : read ? 'Slide to agree' : percent < 3 ? 'Read to the end to slide' : `Keep reading · ${percent}%`;
 
@@ -52,10 +65,16 @@ export function TermsScreen({ slug, developmentName, terms }: { slug: string; de
     setAgreed(true);
     purchase.agreeTerms(terms.version);
     setTimeout(() => router.push(user ? routes.buy.details(slug) : routes.buy.email(slug)), 800);
+    setIsRouting(true);
   };
+
+  if (!purchase.unitId) return <Center width="100%" height="100dvh">
+    <Spinner size='xl' />
+  </Center>
 
   return (
     <Screen
+      disabled={isRouting}
       label="Terms of the deal"
       back={
         purchase.unitId?.toString()

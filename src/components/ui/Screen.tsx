@@ -22,12 +22,13 @@ interface ScreenProps {
   entrance?: 'slide' | 'fade' | 'none';
   /** Tighter top bar (plot page). */
   compactBar?: boolean;
+  disabled?: boolean;
   label: string;
   children: ReactNode;
 }
 
 /** The standard page: top bar with back, scrolling body, sticky footer. */
-export function Screen({ back, backLabel = 'Back', title, actions, footer, entrance = 'slide', compactBar, label, children }: ScreenProps) {
+export function Screen({ back, disabled, backLabel = 'Back', title, actions, footer, entrance = 'slide', compactBar, label, children }: ScreenProps) {
   const router = useRouter();
   const [isRerouting, setIsRerouting] = useState(false);
 
@@ -49,7 +50,11 @@ export function Screen({ back, backLabel = 'Back', title, actions, footer, entra
   }, [])
 
   return (
-    <main className={`${styles.screen} ${styles[entrance]}`} aria-label={label} style={{pointerEvents: isRerouting ? 'none'  :undefined}}>
+    <main 
+      className={`${styles.screen} ${styles[entrance]}`}
+      aria-label={label}
+      style={{pointerEvents: disabled || isRerouting ? 'none' : undefined}
+    }>
       <div className={`${styles.bar} ${compactBar ? styles.compact : ''}`}>
         {back ? (
           <IconButton label={backLabel} onClick={onBack}>
@@ -63,7 +68,7 @@ export function Screen({ back, backLabel = 'Back', title, actions, footer, entra
         <NavProgress isShowing={isRerouting} />
       </div>
       <div className={styles.body} style={{position: 'relative', paddingTop: '16px'}}>
-        {isRerouting && <Box width="100%" height="100%" position="absolute" top="0" left="0" bg='rgba(255, 255, 255, 0.3)' zIndex={9999} />}
+        {(disabled || isRerouting) && <Box width="100%" height="100%" position="absolute" top="0" left="0" bg='rgba(255, 255, 255, 0.3)' zIndex={9999} />}
         {children
         }</div>
       {footer && <div className={styles.footer}>{footer}</div>}

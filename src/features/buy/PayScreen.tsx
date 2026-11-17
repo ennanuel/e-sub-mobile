@@ -12,7 +12,6 @@ import { accountNumber, currencyFull, formatUnitSize } from '@/lib/format';
 import { usePurchase } from '@/lib/purchase';
 import { routes } from '@/lib/routes';
 import { useSession } from '@/lib/session';
-import { useBuyGuard } from './useBuyGuard';
 import styles from './PayScreen.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { getEquityBankAccounts, makeBankPayment } from '@/api/equity';
@@ -26,7 +25,6 @@ export function PayScreen({ listing, equityId: initialEquityId }: { listing: Pro
   const inputRef = useRef<HTMLInputElement>(null);
 
   const slug = listing.id?.toString();
-  const ready = useBuyGuard(slug, { terms: true, session: true, offer: true });
   const router = useRouter();
   const { user } = useSession();
   const toast = useToast();
@@ -62,7 +60,7 @@ export function PayScreen({ listing, equityId: initialEquityId }: { listing: Pro
     }
   }, [initialEquityId, equityId])
 
-  if (isLoadingEquity || !ready || !equity || !user) return <Center width="100%" height="100dvh">
+  if (isLoadingEquity || !equity || !user) return <Center width="100%" height="100dvh">
     <Spinner size="xl" />
   </Center>;
 
@@ -84,7 +82,7 @@ export function PayScreen({ listing, equityId: initialEquityId }: { listing: Pro
       const fileUrls = await uploadFiles(files);
       await makeBankPayment(equityId?.toString() ?? '', { equity_id: equityId?.toString() ?? '', receipt_urls: fileUrls });
       setIsRouting(true);
-      router.push(routes.buy.thankYou(slug));
+      router.push(routes.buy.thankYou(slug, equityId?.toString()));
     } catch (e) {
       setError(errorMessage(e, 'Could not reach LCR. Check your connection and try again.'));
     } finally {

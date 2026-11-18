@@ -17,14 +17,14 @@ import styles from './Listing.module.css';
 import { BaseUser, ProjectDetails } from '@/types';
 import { Avatar, Box, List, ListItem, SkeletonText, Spinner, Stack, StackDivider } from '@chakra-ui/react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { loadListingPaperwork, loadProjectUnits } from '@/lib/load';
+import { loadListingPaperwork, loadProjectUnits, ReferralRealtor } from '@/lib/load';
 import { NavProgress } from '@/components/ui/Screen';
 import { getAmenityIcon } from '@/lib/amenity';
 
 interface ListingProps {
   detail: ProjectDetails;
   isLoadingAgentDetails: boolean;
-  agentDetails: BaseUser | null;
+  agentDetails: ReferralRealtor | null;
   faq: Faq;
   sky: SkyLook;
   morphing: boolean;

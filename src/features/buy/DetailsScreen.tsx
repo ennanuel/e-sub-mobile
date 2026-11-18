@@ -92,7 +92,7 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const purchase = usePurchase();
   const { email } = useBuyEmail();
 
-  const { user, nextOfKin, isLoadingUserDetails, isSigningUp, isRequestingOtp, signUp } = useSession();
+  const { user, nextOfKin, isLoadingUserDetails, isSigningUp, isRequestingOtp, agent, signUp } = useSession();
 
   const [idType, setIdType] = useState<UserDocumentVariant>('national_id');
 
@@ -106,7 +106,7 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
   const formik = useFormik<{ user: UserUpdateValues; nextOfKin: NextOfKinUpdateValues }>({
     initialValues: { user: { ...DEFAULT_USER_DATA }, nextOfKin: { ...DEFAULT_NOK_DATA } },
     onSubmit: () => {
-      if (user) {
+      const createEquityOffer = () => {
         purchase
           .createSubscription()
           .then((res) => {
@@ -117,15 +117,18 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
           .catch((err) => {
             setError((err as Error)?.message);
           });
+      };
+      if (user) {
+        createEquityOffer();
       } else {
         signUp({
-          user: { ...formik.values.user, email },
+          user: { ...formik.values.user, email, ref_id: agent?.ref_id },
           nextOfKin: formik.values.nextOfKin,
           onError: (msg) => {
             setError(msg);
           },
           onSuccess: () => {
-            router.push(routes.buy.verify(slug));
+            createEquityOffer();
           },
         });
       }

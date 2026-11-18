@@ -3,7 +3,15 @@ import { cache } from 'react';
 import { api } from './api';
 import authAxios from '@/api/utils/axios';
 import { BaseURL_ONE, BaseURL_TWO, getStoreName } from '@/constants/routes';
-import { BaseUser, BundlePaymentPlanResponse, PaperworkResponse, ProjectBundle, ProjectBundleResponse, ProjectDetailResponse, ProjectDetails } from '@/types';
+import {
+  BaseUser,
+  BundlePaymentPlanResponse,
+  PaperworkResponse,
+  ProjectBundle,
+  ProjectBundleResponse,
+  ProjectDetailResponse,
+  ProjectDetails,
+} from '@/types';
 import { getESubDetails } from '@/api/equity';
 import { AxiosError } from 'axios';
 
@@ -39,18 +47,36 @@ export const loadDevelopment = async (listingId = ''): Promise<ProjectDetailResp
   // return getProjectDetails(listingId)
 };
 
-export const getAgentDetails = async (agentId: string): Promise<BaseUser> => {
-  const response = authAxios.get(`${BaseURL_TWO}/agents/fetch-by-agent-id/${agentId}/`);
-  return (await response).data.data
-}
+export type ReferralRealtor = {
+  id: number;
+  agent_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  avatar: string | null;
+  phone: string;
+  ref_id: string;
+  country_code: string;
+};
+
+type ReferralInfoResponse = {
+  message: 'Agent retrieved successfully';
+  status: true;
+  data: ReferralRealtor;
+};
+
+export const fetchRealtorByReferralId = async (refId: string): Promise<ReferralInfoResponse> => {
+  const response = await authAxios.get(`${BaseURL_ONE}/user/agent/referral/${refId}`);
+  return response.data;
+};
 
 export const getProjectDetails = async (listingId: string): Promise<ProjectDetails> => {
   const storeName = getStoreName();
 
   const url = `${BaseURL_ONE}/investment/project/${listingId}?store_name=${storeName}`;
   const response = await authAxios.get(url);
-  return response.data?.project
-}
+  return response.data?.project;
+};
 
 export const loadProjectUnits = async (listingId: string, options?: { page?: number }): Promise<ProjectBundleResponse> => {
   const { page = 1 } = options ?? {};

@@ -38,9 +38,8 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
     if (valid) {
       checkEmailStatus({
         email,
-        onChecked({ userExists }) {
-          if (userExists) router.push(routes.buy.verify(slug));
-          else router.push(routes.buy.details(slug));
+        onSuccess: () => {
+          router.push(routes.buy.verify(slug));
           setIsRouting(true);
         },
         onError(msg) {
@@ -53,22 +52,22 @@ export function EmailScreen({ listing }: { listing: ProjectDetails }) {
   useEffect(() => {
     if (!purchase?.unitId) router.push(routes.listing(slug));
     else if (!purchase.termsVersion) {
-     router.push(routes.buy.terms(slug))
+      router.push(routes.buy.terms(slug));
     }
-  }, [purchase])
+  }, [purchase]);
 
   useEffect(() => {
     return () => {
-      setIsRouting(false)
-    }
-  }, [])
-  
+      setIsRouting(false);
+    };
+  }, []);
+
   if (!purchase?.unitId || !purchase.termsVersion) {
     return (
-      <Center width='100%' height='100dvh'>
-        <Spinner size='xl' />
+      <Center width="100%" height="100dvh">
+        <Spinner size="xl" />
       </Center>
-    )
+    );
   }
 
   return (

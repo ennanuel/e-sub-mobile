@@ -18,10 +18,23 @@ interface SignInSheetProps {
   onSignUp: () => void;
 }
 
+type SignUpUser = User & { ref_id: string };
+
 /** Bottom sheet before the papers open: email, the 6-digit code, then the name for the watermark. */
 export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
-  const { user, isRequestingOtp, isValidatingOtp, isLoggingIn, isSigningUp, checkEmailStatus, requestOtp, validateOtp, signUp } =
-    useSession();
+  const {
+    user,
+    isRequestingOtp,
+    isValidatingOtp,
+    isLoggingIn,
+    isSigningUp,
+    isLoadingUserDetails,
+    checkEmailStatus,
+    requestOtp,
+    validateOtp,
+    agent,
+    signUp,
+  } = useSession();
 
   const [step, setStep] = useState<Step>(user ? 'name' : 'email');
   const [error, setError] = useState<null | string>(null);
@@ -33,8 +46,6 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
   const [last, setLast] = useState(user?.last_name ?? '');
   const [middle, setMiddle] = useState(user?.middle_name ?? '');
 
-  const [isNewUser, setIsNewUser] = useState(false);
-
   const focusRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,7 +53,7 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
     return () => clearTimeout(t);
   }, [step]);
 
-  const isLoading = isLoggingIn || isRequestingOtp || isValidatingOtp || isSigningUp;
+  const isLoading = isLoggingIn || isRequestingOtp || isValidatingOtp || isSigningUp || isLoadingUserDetails;
 
   const valid = step === 'email' ? isEmail(email) : step === 'code' ? code.length === 6 : isFilled(first) && isFilled(last);
 
@@ -52,10 +63,8 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
     if (step === 'email') {
       checkEmailStatus({
         email,
-        onChecked: ({ userExists }) => {
-          setIsNewUser(!userExists);
-          if (userExists) setStep('code');
-          else setStep('name');
+        onSuccess: () => {
+          setStep('code');
         },
         onError: (msg) => {
           setError(msg);
@@ -63,15 +72,14 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
       });
     } else if (step === 'code') {
       handleOtpValidate(code);
-    } else {
+    } else if (step === 'name') {
       signUp({
-        user: { email: email, first_name: first, middle_name: middle, last_name: last } as User,
+        user: { first_name: first, last_name: last, middle_name: middle, ref_id: agent?.ref_id } as SignUpUser,
         onSuccess: () => {
-          setStep('code');
+          onClose();
+          onSignUp();
         },
-        onError: (msg) => {
-          setError(msg);
-        },
+        onError: setError,
       });
     }
   };
@@ -80,9 +88,11 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
     validateOtp({
       email: email,
       otp: code,
+      onSignUp: () => {
+        setStep('name');
+      },
       onSuccess: () => {
         onClose();
-        if (isNewUser) onSignUp();
       },
       onError: (msg) => {
         setError(msg === 'invalid' ? 'OTP is invalid' : msg === 'expired' ? 'OTP has expired' : msg);

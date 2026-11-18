@@ -3,7 +3,7 @@ export const routes = {
   home: (slug: string, queryParams?: Record<string, string>) => {
     const searchParams = new URLSearchParams(queryParams);
     const searchParamsStr = queryParams ? `?${searchParams?.toString()}` : '';
-    return `/developments/${slug}${searchParamsStr}`;
+    return routesWrapper(`/developments/${slug}${searchParamsStr}`);
   },
   listing: (slug: string) => routesWrapper(`/developments/${slug}?view=listing`),
   faq: (slug: string) => routesWrapper(`/developments/${slug}/faq`),
@@ -24,17 +24,17 @@ export const routes = {
 
 const routesWrapper = (path: string) => {
   const [pathname, searchParams] = path?.split('?');
-  const agentIdAlreadyExists = searchParams?.includes('agent_id');
+  const agentIdAlreadyExists = searchParams?.includes('agent_referral_id');
   let agentId = '';
 
   if (!agentIdAlreadyExists) {
     try {
       const urlSearchParams = new URLSearchParams(window.location.search);
-      agentId = urlSearchParams.get('agent_id');
+      agentId = urlSearchParams.get('agent_referral_id');
     } catch {
       agentId = '';
     }
   }
 
-  return `${pathname}${agentId || searchParams ? '?' : ''}${searchParams || ''}${agentId ? `${searchParams ? '&' : ''}agent_id=${agentId}` : ''}`;
+  return `${pathname}${agentId || searchParams ? '?' : ''}${searchParams || ''}${agentId ? `${searchParams ? '&' : ''}agent_referral_id=${agentId}` : ''}`;
 };

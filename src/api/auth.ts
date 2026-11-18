@@ -1,18 +1,19 @@
-import { BaseURL_TWO, getStoreName } from '@/constants/routes';
+import { BaseURL_ONE, BaseURL_TWO, getBusinessId, getStoreName } from '@/constants/routes';
 import authAxios from './utils/axios';
-import { NextOfKin, NextOfKinUpdateValues, User, UserUpdateValues } from '@/types';
+import { BaseUser, NextOfKin, NextOfKinUpdateValues, User, UserUpdateValues } from '@/types';
 import { AxiosError, isAxiosError } from 'axios';
 
 const formatDobToBackend = (dob: string) => {
-  const [year, month, day] = dob?.split(/[^0-9]/ig);
+  const [year, month, day] = dob?.split(/[^0-9]/gi);
   return `${year}-${month}-${day}`;
-}
+};
 
-function formatBackendPayload<K>(value: K, field: string):K {
+function formatBackendPayload<K>(value: K, field: string): K {
   if (field?.includes('phone') && typeof value === 'string') {
-    return value?.replace(/[^0-9]/, '')?.trim() as K
-  } if (field === 'date_of_birth' && typeof value === 'string') {
-    return formatDobToBackend(value) as K
+    return value?.replace(/[^0-9]/, '')?.trim() as K;
+  }
+  if (field === 'date_of_birth' && typeof value === 'string') {
+    return formatDobToBackend(value) as K;
   } else {
     return value;
   }
@@ -41,10 +42,24 @@ export const attemptLogin = async (payload: { email: string }): Promise<{ userEx
   return { errorMessage, userExists };
 };
 
-export const registerUser = async (payload: UserUpdateValues & { ref_id?: string }) => {
+type RegisterUserResponse = {
+  message: string;
+  token: string;
+  refresh_token: string;
+  data: {
+    id: number;
+    user: BaseUser & {};
+  };
+};
+
+export const registerUser = async (payload: UserUpdateValues & { ref_id?: string }): Promise<RegisterUserResponse> => {
   const storeName = getStoreName();
-  const body = Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, formatBackendPayload(value, key)]).filter((entry) => !!entry?.[1]?.length));
-  const response = await authAxios.post(`${BaseURL_TWO}/store/customers/`, { ...body, store_name: storeName });
+  const body = Object.fromEntries(
+    Object.entries(payload)
+      .map(([key, value]) => [key, formatBackendPayload(value, key)])
+      .filter((entry) => !!entry?.[1]?.length),
+  );
+  const response = await authAxios.post(`${BaseURL_TWO}/store/customers/?verify=true`, { ...body, store_name: storeName });
   return response.data;
 };
 
@@ -111,16 +126,44 @@ export const updateUserDetails = async (
 ) => {
   const body = fields
     .filter((fieldPayload) => Object.values(fieldPayload[1]).some(Boolean))
-    .map(([field, values]) => ({ [field]: {...values, ...(field === 'profile' ? {profile_details: true, document_update: true}: {next_of_kin: true})} }));
+    .map(([field, values]) => ({
+      [field]: { ...values, ...(field === 'profile' ? { profile_details: true, document_update: true } : { next_of_kin: true }) },
+    }));
 
-    const storeName = getStoreName();
-  await Promise.all(body.map((payload) => {
-    const [_, payloadValues] = Object.entries(payload)[0]
-    const body = Object.fromEntries(Object.entries(payloadValues).filter((entry) => typeof entry[1] === 'string' || Array.isArray(entry[1]) ? !!entry[1]?.length : !!entry).map(([key, value]) => [
-      key === 'documents' ? 'document' : key, 
-      formatBackendPayload(value, key)
-    ]));
-    return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, body)
-  }));
+  const storeName = getStoreName();
+  await Promise.all(
+    body.map((payload) => {
+      const [_, payloadValues] = Object.entries(payload)[0];
+      const body = Object.fromEntries(
+        Object.entries(payloadValues)
+          .filter((entry) => (typeof entry[1] === 'string' || Array.isArray(entry[1]) ? !!entry[1]?.length : !!entry))
+          .map(([key, value]) => [key === 'documents' ? 'document' : key, formatBackendPayload(value, key)]),
+      );
+      return authAxios.patch(`${BaseURL_TWO}/store/store_settings?store_name=${storeName}`, body);
+    }),
+  );
   return;
+};
+
+export const requestOTPForEmailVerification = async (data: { email: string; verify?: boolean }) => {
+  const businessId = getBusinessId();
+  return await authAxios.post(`${BaseURL_ONE}/user/create_totp_email_extended`, {
+    ...data,
+    business_id: businessId,
+  });
+};
+
+export const loginWithOTP = async (data: { email: string; code: string }) => {
+  const businessId = getBusinessId();
+  return await authAxios.post(`${BaseURL_TWO}/store/direct-purchase/`, {
+    email: data.email.trim(),
+    code: data.code,
+    business_id: businessId,
+  });
+};
+
+export const verifyMagicToken = async (token: string) => {
+  return await authAxios.post(`${BaseURL_ONE}/store/verify-magic-token/`, {
+    token,
+  });
 };

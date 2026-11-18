@@ -12,7 +12,6 @@ import { useSession } from '@/lib/session';
 import { useBuyEmail } from './BuyEmailContext';
 import { usePurchase } from '@/lib/purchase';
 
-
 export function VerifyScreen({ slug }: { slug: string }) {
   const router = useRouter();
   const { email } = useBuyEmail();
@@ -22,7 +21,7 @@ export function VerifyScreen({ slug }: { slug: string }) {
   const [isRouting, setIsRouting] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
 
-  const { isRequestingOtp, isValidatingOtp, validateOtp, requestOtp, user } = useSession();
+  const { isRequestingOtp, isValidatingOtp, isLoadingUserDetails, validateOtp, requestOtp, user } = useSession();
 
   const [code, setCode] = useState('');
   const input = useRef<HTMLInputElement>(null);
@@ -33,8 +32,8 @@ export function VerifyScreen({ slug }: { slug: string }) {
   }, []);
 
   useEffect(() => {
-    if (!purchase?.unitId) router.replace(routes.listing(slug))
-    else if (!user && !email) router.replace(routes.buy.email(slug))
+    if (!purchase?.unitId) router.replace(routes.listing(slug));
+    else if (!user && !email) router.replace(routes.buy.email(slug));
   }, [user, email, purchase]);
 
   const confirm = async (value = code) => {
@@ -42,16 +41,12 @@ export function VerifyScreen({ slug }: { slug: string }) {
       validateOtp({
         email: email,
         otp: value,
-        onSuccess: async () => {
-          if (!user) {
-            await purchase.createSubscription().then(() => {
-              setIsRouting(true)
-            }).catch(() => {
-              setIsRouting(false)
-            })
-          } else {
-            router.push(routes.buy.details(slug));
-          }
+        onSuccess: () => {
+          setIsRouting(true);
+          router.push(routes.buy.details(slug));
+        },
+        onSignUp: () => {
+          router.push(routes.buy.details(slug));
           setIsRouting(true);
         },
         onError: (msg) => {
@@ -63,16 +58,21 @@ export function VerifyScreen({ slug }: { slug: string }) {
 
   useEffect(() => {
     return () => {
-      setIsRouting(false)
-    }
-  }, [])
+      setIsRouting(false);
+    };
+  }, []);
 
   return (
     <Screen
       label="Confirm your email"
       back={routes.buy.email(slug)}
       footer={
-        <Button disabled={code.length !== 6} loading={isValidatingOtp || isRouting} loadingText="Checking" onClick={() => void confirm()}>
+        <Button
+          disabled={code.length !== 6}
+          loading={isValidatingOtp || isLoadingUserDetails || isRouting}
+          loadingText="Checking"
+          onClick={() => void confirm()}
+        >
           Confirm
         </Button>
       }

@@ -6,7 +6,7 @@ import { ProjectDetails } from '@/types';
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ view?: string; agent_id: string; }>;
+  searchParams: Promise<{ view?: string; agent_referral_id: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -21,11 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DevelopmentPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { view, agent_id } = await searchParams;
+  const { view } = await searchParams;
   const [projectInfo, faq] = await Promise.all([loadDevelopment(slug), loadFaq(slug)]);
-  const project = (projectInfo?.project ?? {}) as ProjectDetails
+  const project = (projectInfo?.project ?? {}) as ProjectDetails;
 
   if (!project) notFound();
 
-  return <HomeExperience listing={project} faq={faq} startOnListing={view === 'listing'} agentId={agent_id} />;
+  return <HomeExperience listing={project} faq={faq} startOnListing={view === 'listing'} />;
 }

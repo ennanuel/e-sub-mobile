@@ -92,8 +92,10 @@ export function HomeExperience({ listing, faq, startOnListing }: { listing: Proj
           frame.current = requestAnimationFrame(step);
           return;
         }
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('view', 'listing');
         setMode(to === 1 ? 'listing' : 'cover');
-        window.history.replaceState(null, '', to === 1 ? '?view=listing' : window.location.pathname);
+        window.history.replaceState(null, '', to === 1 ? `?${searchParams.toString()}` : window.location.pathname);
       };
       frame.current = requestAnimationFrame(step);
     },

@@ -88,7 +88,7 @@ export function PassportPhoto({ value, invalid, onChange, handleIsUploading }: P
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept="image/jpg,image/png,image/webp"
         hidden
         onChange={(e) => void onFile(e.target.files?.[0]).then(() => (e.target.value = ''))}
       />

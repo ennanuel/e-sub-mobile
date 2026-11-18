@@ -6,7 +6,7 @@ import { ProjectDetails } from '@/types';
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ view?: string; agent_referral_id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

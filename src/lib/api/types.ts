@@ -140,6 +140,12 @@ export interface UploadedFile {
 export type Gender = 'Male' | 'Female';
 export type MaritalStatus = 'Single' | 'Married' | 'Other';
 export type Relationship = 'Spouse' | 'Parent' | 'Sibling' | 'Child' | 'Friend';
+export type HeardAboutSource = 'Instagram' | 'Facebook' | 'LinkedIn' | 'Billboard or Flyer' | 'A Realtor' | 'Word of Mouth' | 'Others';
+
+export interface HeardAboutUs {
+  source: HeardAboutSource;
+  other?: string;
+}
 
 export interface BuyerDetails {
   passportPhotoFileId?: string;

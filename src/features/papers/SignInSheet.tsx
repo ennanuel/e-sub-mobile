@@ -8,10 +8,13 @@ import text from '@/components/ui/text.module.css';
 import { links } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { isEmail, isFilled } from '@/lib/validation';
-import styles from './SignInSheet.module.css';
 import { User } from '@/types';
+import { HeardAboutSource } from '@/lib/api';
 
-type Step = 'email' | 'code' | 'name';
+import field from '../../components/ui/Field.module.css';
+import styles from './SignInSheet.module.css';
+
+type Step = 'email' | 'code' | 'name' | 'heard';
 
 interface SignInSheetProps {
   onClose: () => void;
@@ -19,6 +22,16 @@ interface SignInSheetProps {
 }
 
 type SignUpUser = User & { ref_id: string };
+
+export const HEARD_ABOUT_SOURCES: readonly HeardAboutSource[] = [
+  'Instagram',
+  'Facebook',
+  'LinkedIn',
+  'Billboard or Flyer',
+  'A Realtor',
+  'Word of Mouth',
+  'Others',
+];
 
 /** Bottom sheet before the papers open: email, the 6-digit code, then the name for the watermark. */
 export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
@@ -45,8 +58,16 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
   const [first, setFirst] = useState(user?.first_name ?? '');
   const [last, setLast] = useState(user?.last_name ?? '');
   const [middle, setMiddle] = useState(user?.middle_name ?? '');
+  const [other, setOther] = useState('');
+  const [source, setSource] = useState<string>('');
 
   const focusRef = useRef<HTMLInputElement>(null);
+  const otherRef = useRef<HTMLInputElement>(null);
+
+  const pick = (s: string) => {
+    setSource(s);
+    if (s === 'Others') setTimeout(() => otherRef.current?.focus({ preventScroll: true }), 120);
+  };
 
   useEffect(() => {
     const t = setTimeout(() => focusRef.current?.focus({ preventScroll: true }), 380);
@@ -73,8 +94,18 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
     } else if (step === 'code') {
       handleOtpValidate(code);
     } else if (step === 'name') {
+      setStep('heard');
+    } else if (step === 'heard') {
       signUp({
-        user: { first_name: first, last_name: last, middle_name: middle, ref_id: agent?.ref_id } as SignUpUser,
+        user: {
+          first_name: first,
+          last_name: last,
+          middle_name: middle,
+          email,
+          ref_id: agent?.ref_id,
+          ...(source === 'A Realtor' && agent ? { agent_name: `${agent?.first_name ?? ''} ${agent?.last_name ?? ''}`.trim() } : {}),
+          ...(other ? { other_field: other } : {}),
+        } as SignUpUser,
         onSuccess: () => {
           onClose();
           onSignUp();
@@ -120,7 +151,7 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
 
         {step === 'email' && (
           <>
-            <div className={styles.step}>STEP 1 OF 3</div>
+            <div className={styles.step}>STEP 1 OF 4</div>
             <h1 id="signin-title" className={styles.question}>
               {'What’s your email?'}
             </h1>
@@ -146,7 +177,7 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
 
         {step === 'code' && (
           <>
-            <div className={styles.step}>STEP 2 OF 3</div>
+            <div className={styles.step}>STEP 2 OF 4</div>
             <h1 id="signin-title" className={styles.question}>
               Enter the code
             </h1>
@@ -180,7 +211,7 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
 
         {step === 'name' && (
           <>
-            <div className={styles.step}>STEP 3 OF 3</div>
+            <div className={styles.step}>STEP 3 OF 4</div>
             <h1 id="signin-title" className={styles.question}>
               What’s your name?
             </h1>
@@ -220,11 +251,42 @@ export function SignInSheet({ onClose, onSignUp }: SignInSheetProps) {
           </>
         )}
 
+        {step === 'heard' && (
+          <>
+            <div className={styles.step}>STEP 4 OF 4</div>
+            <h1 id="signin-title" className={styles.question}>
+              How did you hear about us?
+            </h1>
+            <p className={`${styles.note} ${styles.lead}`}>Pick one.</p>
+            <div className={`${field.pills} ${styles.choices}`} role="radiogroup" aria-label="How did you hear about us?">
+              {HEARD_ABOUT_SOURCES.map((s) => (
+                <button key={s} type="button" role="radio" aria-checked={source === s} onClick={() => pick(s)}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            {source === 'Others' && (
+              <label className={styles.field}>
+                <span>Where did you hear about us?</span>
+                <input
+                  ref={otherRef}
+                  className={styles.input}
+                  autoComplete="off"
+                  placeholder="Tell us where"
+                  value={other}
+                  onChange={(e) => setOther(e.target.value)}
+                  onKeyDown={submitOnEnter}
+                />
+              </label>
+            )}
+          </>
+        )}
+
         {error && <p className={text.error}>{error}</p>}
 
         <div className={styles.next}>
-          <Button disabled={!valid} loading={isLoading} loadingText={'Checking'} onClick={() => next()}>
-            Next
+          <Button disabled={!valid} loading={isLoading} loadingText={step === 'heard' ? 'Please wait' : 'Checking'} onClick={() => next()}>
+            {step === 'heard' ? 'Proceed' : 'Next'}
           </Button>
         </div>
       </section>

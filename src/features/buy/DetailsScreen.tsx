@@ -31,6 +31,7 @@ import { formatLocalPhone, getCountryDetailsByName } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useBuyEmail } from './BuyEmailContext';
 import { Box, Center, Spinner } from '@chakra-ui/react';
+import { HEARD_ABOUT_SOURCES } from '../papers/SignInSheet';
 
 const TABS: readonly string[] = ['Basic info', 'More info', 'Next of kin'];
 const NEXT_LABEL: readonly string[] = ['Next: More info', 'Next: Next of kin', 'Continue'];
@@ -49,6 +50,7 @@ function problems(tab: number, d: DetailsDraft, storeData: { user: User; nextOfK
   const bad: Key[] = [];
   const { user, nextOfKin } = d;
   if (tab === 0) {
+    if (!isFilled(user?.date_of_birth) && !isFilled(storeData?.user?.date_of_birth)) bad.push('user.date_of_birth');
     if (!isFilled(user?.avatar) && !isFilled(storeData?.user?.avatar)) bad.push('user.avatar');
     if (!isFilled(user?.first_name) && !isFilled(storeData.user.first_name)) bad.push('user.first_name');
     if (!isFilled(user?.last_name) && !isFilled(storeData?.user?.last_name)) bad.push('user.last_name');
@@ -103,6 +105,9 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
     );
   };
 
+  const [others, setOthers] = useState('');
+  const [source, setSource] = useState('');
+
   const formik = useFormik<{ user: UserUpdateValues; nextOfKin: NextOfKinUpdateValues }>({
     initialValues: { user: { ...DEFAULT_USER_DATA }, nextOfKin: { ...DEFAULT_NOK_DATA } },
     onSubmit: () => {
@@ -122,7 +127,13 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
         createEquityOffer();
       } else {
         signUp({
-          user: { ...formik.values.user, email, ref_id: agent?.ref_id },
+          user: {
+            ...formik.values.user,
+            email,
+            ref_id: agent?.ref_id,
+            ...(source === 'A Realtor' && agent ? { agent_name: `${agent?.first_name ?? ''} ${agent?.last_name ?? ''}`.trim() } : {}),
+            ...(others ? { other_field: others } : {}),
+          },
           nextOfKin: formik.values.nextOfKin,
           onError: (msg) => {
             setError(msg);
@@ -401,6 +412,8 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
               type="date"
               value={formik.values.user.date_of_birth}
               onChange={setFieldValue('user.date_of_birth')}
+              invalid={invalid('user.date_of_birth')}
+              shakeKey={tries}
             />
           )}
           <PillGroup
@@ -452,6 +465,28 @@ export function DetailsScreen({ listing }: { listing: ProjectDetails }) {
             }}
             shakeKey={tries}
           />
+          {!user && (
+            <>
+              <PillGroup
+                label="How did you hear about us?"
+                options={HEARD_ABOUT_SOURCES}
+                value={source}
+                onChange={(v) => {
+                  setSource(v as string);
+                }}
+              />
+              {source === 'Others' && (
+                <TextField
+                  id="heard-about-other"
+                  label="Where did you hear about us?"
+                  placeholder="Tell us where"
+                  autoComplete="off"
+                  value={others}
+                  onChange={setOthers}
+                />
+              )}
+            </>
+          )}
         </div>
       )}
 

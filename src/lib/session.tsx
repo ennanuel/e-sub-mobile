@@ -5,12 +5,14 @@ import useUser from './hooks/useUser';
 import { useQuery } from '@tanstack/react-query';
 import { getESubDetails } from '@/api/equity';
 import { fetchRealtorByReferralId, ReferralRealtor } from './load';
+import { usePathname } from 'next/navigation';
 
 type SessionState = ReturnType<typeof useUser> & { isLoadingAgent: boolean; agent: ReferralRealtor | null };
 
 const SessionContext = createContext<SessionState | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const userState = useUser();
   const [agentReferralId, setAgentReferralId] = useState<string | null>();
 
@@ -31,11 +33,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.search) {
-      const searchParams = new URLSearchParams(window.location.search);
-      const agentReferralIdParam = searchParams.get('agent_referral_id');
-      setAgentReferralId(agentReferralIdParam ?? null);
+      setTimeout(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const agentReferralIdParam = searchParams.get('agent_referral_id');
+        if (agentReferralIdParam) setAgentReferralId(agentReferralIdParam ?? null);
+      }, 800);
     }
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (data) userState.refetch();

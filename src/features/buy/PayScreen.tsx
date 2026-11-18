@@ -20,7 +20,7 @@ import { uploadFiles } from '@/api/store';
 import { Center, Spinner } from '@chakra-ui/react';
 
 /** Buying, step 5: the amount and LCR's accounts. "I've made the transfer" tells LCR to look for it. */
-export function PayScreen({ listing, equityId: initialEquityId }: { listing: ProjectDetails, equityId: string }) {
+export function PayScreen({ listing, equityId: initialEquityId }: { listing: ProjectDetails; equityId: string }) {
   const [isRouting, setIsRouting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -56,13 +56,16 @@ export function PayScreen({ listing, equityId: initialEquityId }: { listing: Pro
 
   useEffect(() => {
     if (!equityId?.toString() && !!initialEquityId && !isNaN(Number(initialEquityId))) {
-      setEquityId(Number(initialEquityId))
+      setEquityId(Number(initialEquityId));
     }
-  }, [initialEquityId, equityId])
+  }, [initialEquityId, equityId]);
 
-  if (isLoadingEquity || !equity || !user) return <Center width="100%" height="100dvh">
-    <Spinner size="xl" />
-  </Center>;
+  if (isLoadingEquity || !equity || !user)
+    return (
+      <Center width="100%" height="100dvh">
+        <Spinner size="xl" />
+      </Center>
+    );
 
   const copy = async (n: string) => {
     try {
@@ -102,21 +105,34 @@ export function PayScreen({ listing, equityId: initialEquityId }: { listing: Pro
       footer={
         <>
           {error && <p className={text.footerError}>{error}</p>}
-          <Button loading={sending || isRouting} loadingText="Letting LCR know" onClick={() => {
-            inputRef.current?.click();
-          }}>
+          <Button
+            loading={sending || isRouting}
+            loadingText="Letting LCR know"
+            onClick={() => {
+              inputRef.current?.click();
+            }}
+          >
             I’ve made the transfer
           </Button>
-          <Button variant="link" onClick={() => {
-            router.push(routes.home(slug)
-          )}}>
+          <Button
+            variant="link"
+            onClick={() => {
+              router.push(routes.home(slug));
+            }}
+          >
             Go back to home page
           </Button>
         </>
       }
     >
       <input ref={inputRef} multiple type="file" accept="image/* applcation/pdf" style={{ display: 'none' }} onChange={handleFileChange} />
-      <h1 className={text.heading}>Transfer to any of these.</h1>
+      <h1 className={text.heading}>
+        {isLoadingBankAccounts
+          ? 'Fetching Bank Accounts...'
+          : bankAccounts?.length === 1
+            ? 'Transfer to this'
+            : 'Transfer to any of these.'}
+      </h1>
       <div className={`label ${styles.amountLabel}`}>Amount to be paid</div>
       <div className={styles.amount}>{currencyFull(amountToPay, currency)}</div>
 

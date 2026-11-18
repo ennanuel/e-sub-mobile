@@ -12,10 +12,11 @@ interface PassportPhotoProps {
   value: string | null;
   handleIsUploading: (isUploading: boolean) => void;
   onChange: (value: string) => void;
+  invalid: boolean;
 }
 
 /** Round passport photo with a camera badge. Picking a photo shrinks it to 360px square and uploads it. */
-export function PassportPhoto({ value, onChange, handleIsUploading }: PassportPhotoProps) {
+export function PassportPhoto({ value, invalid, onChange, handleIsUploading }: PassportPhotoProps) {
   const input = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
@@ -56,9 +57,9 @@ export function PassportPhoto({ value, onChange, handleIsUploading }: PassportPh
             <img src={value} alt="Your passport photograph" />
           ) : (
             <svg width="84" height="84" viewBox="0 0 70 70" aria-hidden="true">
-              <rect width="70" height="70" fill="#EEF0F8" />
-              <circle cx="35" cy="28" r="12.5" fill="rgba(11,11,59,.22)" />
-              <path d="M10 70c2-15 12-23 25-23s23 8 25 23z" fill="rgba(11,11,59,.22)" />
+              <rect width="70" height="70" fill={invalid ? '#F8EEEE' : '#EEF0F8'} />
+              <circle cx="35" cy="28" r="12.5" fill={invalid ? 'rgba(59, 11, 11, .22)' : 'rgba(11,11,59,.22)'} />
+              <path d="M10 70c2-15 12-23 25-23s23 8 25 23z" fill={invalid ? 'rgba(59, 11, 11, .22)' : 'rgba(11,11,59,.22)'} />
             </svg>
           )}
         </span>
